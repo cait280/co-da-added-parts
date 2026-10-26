@@ -499,10 +499,28 @@ function render() {
 }
 
 // ── 4. Review ──
+// One body for tally and for confirm. The server recomputes the tally at confirm time from
+// exactly this input, so there is one shape and one place to change it.
+//
+// The project LABEL travels with it because the confirm execution has no project lookup of its
+// own -- every action is its own webhook call -- and without it the inventory channel read
+// "Added parts — P-, , scanned by Andrew" (exec 13140). It is display only: project_id is what
+// every URL and every match in the write path is keyed on, and number/client/name come from the
+// same project reply that project_id came from, so they are no more trusted than it is.
+function batchBody() {
+  var p = state.project || {};
+  return {
+    project_id: p.project_id,
+    project_number: p.number,
+    project_client: p.client,
+    project_name: p.name,
+    lines: state.lines.filter(function (r) { return r.company_product_id; })
+      .map(function (r) { return { code: r.code, qty: r.qty, company_product_id: r.company_product_id }; }),
+  };
+}
 $('scan-done').onclick = function () {
-  var lines = state.lines.filter(function (r) { return r.company_product_id; })
-    .map(function (r) { return { code: r.code, qty: r.qty, company_product_id: r.company_product_id }; });
-  if (!lines.length) return;
+  var body = batchBody();
+  if (!body.lines.length) return;
   stopCamera();
   say('review-msg', '');
   $('review').innerHTML = '';
@@ -511,7 +529,7 @@ $('scan-done').onclick = function () {
   // a reply that actually has lines in it.
   $('confirm').disabled = true;
   show('s-review');
-  api('tally', { project_id: state.project.project_id, lines: lines }).then(function (r) {
+  api('tally', body).then(function (r) {
     // The server's own message says WHICH thing is wrong ("I can't find the Staging On-Jobsite
     // location in Jetbuilt"); mine said only that something was. Pass it through, and keep the
     // generic line for the cases where there is nothing to pass on.
@@ -556,9 +574,7 @@ $('confirm').onclick = function () {
   state.busy = true;
   $('confirm').disabled = true;
   say('review-msg', '');
-  var lines = state.lines.filter(function (r) { return r.company_product_id; })
-    .map(function (r) { return { code: r.code, qty: r.qty, company_product_id: r.company_product_id }; });
-  api('confirm', { project_id: state.project.project_id, lines: lines }).then(function (r) {
+  api('confirm', batchBody()).then(function (r) {
     if (r && r.error) return failSubmit(r.error);
     if (!r || !r.batch_id) return failSubmit(null);
     state.batch = r.batch_id;
@@ -633,7 +649,13 @@ $('undo').onclick = function () {
     $('result').innerHTML = '';
     $('progress').textContent = 'Undone — P-' + state.project.number
       + "'s items from this batch are zeroed out and the stock is back on the shelf.";
-    say('result-msg', '');
+    // Jetbuilt silently drops `notes` on an item PATCH (exec 13145), so a zeroed item can still
+    // read "Scanned in by ...". Say so rather than let someone find it in Jetbuilt and doubt the
+    // undo. The line disappears on its own if Jetbuilt starts honouring the field.
+    say('result-msg', r.note_kept
+      ? 'Jetbuilt kept the original note on those items, so they still read as scanned in — '
+        + 'the quantities are correct.'
+      : '');
   }).catch(function () { $('undo').disabled = false; });
 };
 
