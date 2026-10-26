@@ -1,3 +1,559 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Added Parts</title>
-<style>body{margin:0;background:#101418;color:#e6e9ee;font:17px -apple-system,system-ui,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;text-align:center;padding:24px}</style></head>
-<body><div><h1>Added Parts</h1><p>The app is being moved here. Check back shortly.</p></div></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#101418">
+<title>Added Parts</title>
+<style>
+:root{--bg:#101418;--card:#192027;--line:#2a3440;--text:#eef2f6;--dim:#9fb0c0;--accent:#4c9aff;--warn:#ffb020;--bad:#ff5c5c;--ok:#39c07c}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+  font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+header{position:sticky;top:0;z-index:5;background:var(--bg);padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+h1{margin:0;font-size:19px;font-weight:650}
+main{padding:16px;padding-bottom:120px;max-width:620px;margin:0 auto}
+.screen{display:none}.screen.on{display:block}
+label{display:block;font-size:13px;color:var(--dim);margin:0 0 6px}
+input{width:100%;padding:14px;font-size:17px;background:var(--card);color:var(--text);
+  border:1px solid var(--line);border-radius:12px}
+input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+button{font:inherit;font-weight:600;border:0;border-radius:12px;padding:15px 18px;background:var(--accent);
+  color:#06101c;width:100%;margin-top:12px}
+button[disabled]{opacity:.45}
+button.ghost{background:var(--card);color:var(--text);border:1px solid var(--line)}
+button.danger{background:var(--card);color:var(--bad);border:1px solid var(--line)}
+.msg{margin:12px 0;padding:12px 14px;border-radius:12px;background:var(--card);border:1px solid var(--line)}
+.msg.bad{border-color:var(--bad);color:#ffd9d9}
+.msg.warn{border-color:var(--warn)}
+#view{width:100%;border-radius:14px;background:#000;aspect-ratio:4/3;object-fit:cover;display:block}
+.hint{color:var(--dim);font-size:14px;text-align:center;margin:8px 0 0}
+.diag{color:var(--dim);font-size:12px;margin:8px 0 0;word-break:break-word}
+ul{list-style:none;margin:16px 0 0;padding:0}
+li{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.name{font-weight:650}
+.desc{color:var(--dim);font-size:14px;margin-top:2px}
+.meta{color:var(--dim);font-size:14px;margin-top:6px}
+.flag{color:var(--warn);font-size:14px;margin-top:6px}
+.qty{display:flex;align-items:center;gap:12px;margin-top:10px}
+.qty button{width:46px;height:46px;margin:0;padding:0;font-size:22px;background:var(--bg);
+  border:1px solid var(--line);color:var(--text);border-radius:12px}
+.qty input{width:72px;text-align:center;padding:10px}
+.qty .rm{margin-left:auto;color:var(--bad);background:transparent;border:0;width:44px}
+.totals{color:var(--dim);margin-top:14px;font-size:15px}
+.row2{display:flex;gap:10px}.row2 button{flex:1}
+</style>
+</head>
+<body>
+<header><h1 id="hdr">Added Parts</h1></header>
+<main>
+
+  <section id="s-pin" class="screen on">
+    <label for="pin">Enter your PIN</label>
+    <input id="pin" type="tel" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="••••">
+    <button id="pin-go">Continue</button>
+    <div id="pin-msg"></div>
+  </section>
+
+  <section id="s-project" class="screen">
+    <label for="proj">Project number</label>
+    <input id="proj" type="text" inputmode="numeric" autocomplete="off" placeholder="Project number">
+    <button id="proj-go">Continue</button>
+    <div id="proj-msg"></div>
+  </section>
+
+  <section id="s-scan" class="screen">
+    <video id="view" playsinline muted autoplay></video>
+    <p class="hint" id="scan-hint">Point the camera at a label.</p>
+    <div id="scan-msg"></div>
+    <ul id="lines"></ul>
+    <p class="totals" id="totals"></p>
+    <button id="scan-done" disabled>Scan at least one label</button>
+  </section>
+
+  <section id="s-review" class="screen">
+    <div class="msg" id="room-line"></div>
+    <div id="review-msg"></div>
+    <ul id="review"></ul>
+    <button id="confirm">Confirm</button>
+    <button id="back" class="ghost">Back</button>
+  </section>
+
+  <section id="s-result" class="screen">
+    <div class="msg" id="progress"></div>
+    <ul id="result"></ul>
+    <div id="result-msg"></div>
+    <button id="again">New batch</button>
+    <button id="undo" class="danger">Undo this batch</button>
+  </section>
+
+</main>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script>
+'use strict';
+// ── Added Parts, iPhone web app. One static file; every call goes to API below. ──────────────
+// Three things shape this file. One: Safari on iOS has no BarcodeDetector, so jsQR decodes
+// frames itself and the camera path is the only path, not a fallback. Two: the PHONE fetches the
+// label page, because Jetbuilt sends access-control-allow-origin:* and the phone is on a US
+// network -- n8n's Frankfurt egress gets an empty 200 from the same URL.
+//
+// Three, and this is what v2b is: n8n does NOT serve this file any more. n8n cloud stamps
+// `content-security-policy: sandbox allow-scripts` on every text/html webhook response, with no
+// allow-same-origin, and a Respond to Webhook response header does not override it -- Marshal
+// proved that with two probe workflows, and n8n hardened it deliberately after CVE-2025-61914.
+// An opaque origin cannot reach getUserMedia and throws on localStorage, which is exactly what
+// Andrew's iPhone showed: no camera, and the PIN asked for again on every reload. So the page is
+// hosted on a static host of its own and the API below is absolute. Nothing on the n8n side has
+// to change for that: its OPTIONS preflight already echoes the Origin back.
+var API = 'https://co-da.app.n8n.cloud/webhook/added-parts-mrtjqxp76jy/api';
+var LABEL = 'https://jetbui.lt/i/';
+var MARKER = 'This asset is being tracked within the Jetbuilt Project Platform';
+var TOKEN_KEY = 'ap.token', NAME_KEY = 'ap.name';
+// The PIN is hashed here, on the phone, before it is sent: n8n's execution data held it in clear
+// (13080, 13081, 13086, 13089). This string is PART OF THE STORED CREDENTIAL, not a tuning knob
+// -- changing it invalidates every pin_hash in cody_added_parts_users and needs a reseed.
+var PIN_SALT = 'co-da.added-parts';
+
+var state = { token: null, name: null, project: null, lines: [], batch: null, room: null,
+  undoUntil: 0, busy: false };
+
+var $ = function (id) { return document.getElementById(id); };
+var show = function (id) {
+  var all = document.querySelectorAll('.screen');
+  for (var i = 0; i < all.length; i++) all[i].classList.remove('on');
+  $(id).classList.add('on');
+};
+var say = function (where, text, kind) {
+  $(where).innerHTML = text ? '<div class="msg ' + (kind || '') + '"></div>' : '';
+  if (text) $(where).firstChild.textContent = text;
+};
+var esc = function (s) { var d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; };
+
+// ── sha256 ───────────────────────────────────────────────────────────────────────────────────
+// Byte-identical to tools/build/app/ap/_sha.js, which is what AP Login hashes with; the suite
+// fails if the two copies drift. Hand-rolled rather than crypto.subtle because that is async and
+// gated on a secure context, and because one implementation shared with the server is the whole
+// point -- two that disagree lock the operator out of a system with one operator.
+/* _sha.js begin */
+// sha256, written out rather than required: the Code sandbox has no crypto to assume, and this
+// hashes PINs. Lifted verbatim from the scheduling sync (SS Derive), where it has run daily since
+// September.
+function sha256(ascii) {
+  function rr(n, x) { return (n >>> x) | (n << (32 - x)); }
+  const K = [];
+  const H = [1779033703, 3144134277, 1013904242, 2773480762, 1359893119, 2600822924, 528734635, 1541459225];
+  let p = 2, i, j;
+  for (i = 0; i < 64;) {
+    let isPrime = true;
+    for (let f = 2; f * f <= p; f++) if (p % f === 0) { isPrime = false; break; }
+    if (isPrime) { K[i] = (Math.pow(p, 1 / 3) % 1 * Math.pow(2, 32)) | 0; i++; }
+    p++;
+  }
+  const msg = unescape(encodeURIComponent(ascii));
+  const words = [];
+  const len = msg.length * 8;
+  for (i = 0; i < msg.length; i++) words[i >> 2] |= msg.charCodeAt(i) << ((3 - i % 4) * 8);
+  words[len >> 5] |= 0x80 << (24 - len % 32);
+  words[((len + 64 >> 9) << 4) + 15] = len;
+  const w = new Array(64);
+  for (i = 0; i < words.length; i += 16) {
+    const h = H.slice();
+    for (j = 0; j < 64; j++) {
+      if (j < 16) w[j] = words[i + j] | 0;
+      else {
+        const g0 = w[j - 15], g1 = w[j - 2];
+        const s0 = rr(g0, 7) ^ rr(g0, 18) ^ (g0 >>> 3);
+        const s1 = rr(g1, 17) ^ rr(g1, 19) ^ (g1 >>> 10);
+        w[j] = (w[j - 16] + s0 + w[j - 7] + s1) | 0;
+      }
+      const S1 = rr(h[4], 6) ^ rr(h[4], 11) ^ rr(h[4], 25);
+      const ch = (h[4] & h[5]) ^ (~h[4] & h[6]);
+      const t1 = (h[7] + S1 + ch + K[j] + w[j]) | 0;
+      const S0 = rr(h[0], 2) ^ rr(h[0], 13) ^ rr(h[0], 22);
+      const mj = (h[0] & h[1]) ^ (h[0] & h[2]) ^ (h[1] & h[2]);
+      const t2 = (S0 + mj) | 0;
+      h[7] = h[6]; h[6] = h[5]; h[5] = h[4]; h[4] = (h[3] + t1) | 0;
+      h[3] = h[2]; h[2] = h[1]; h[1] = h[0]; h[0] = (t1 + t2) | 0;
+    }
+    for (j = 0; j < 8; j++) H[j] = (H[j] + h[j]) | 0;
+  }
+  return H.map((x) => ('00000000' + (x >>> 0).toString(16)).slice(-8)).join('');
+}
+/* _sha.js end */
+
+// ── the one call ──
+function api(action, body) {
+  var payload = body || {};
+  payload.action = action;
+  payload.token = state.token;
+  return fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload) })
+    .then(function (r) { return r.json().catch(function () { return { error: 'unreadable' }; }); })
+    .then(function (j) {
+      // A token that has expired drops the operator back to the PIN rather than failing oddly
+      // somewhere deeper in.
+      if (j && j.error === 'auth') { signOut(); throw new Error('auth'); }
+      return j;
+    });
+}
+function signOut() {
+  try { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(NAME_KEY); } catch (e) {}
+  state.token = null; state.name = null;
+  $('hdr').textContent = 'Added Parts';
+  show('s-pin');
+}
+
+// ── one tap is one request ───────────────────────────────────────────────────────────────────
+// Every tap in Arc fired the handler twice: two logins (13080/13081) and two project lookups
+// (13083/13084) from one tap each. A duplicate login is not merely noise -- each login mints a
+// NEW token and upserts it, so the row ends up holding one token while the page holds the other,
+// and the next call comes back {error:"auth"} and drops the operator to the PIN screen. The
+// button's own disabled flag is the guard: a second tap before the first answer does nothing,
+// and `free` puts the button back on every path, including the ones that return early.
+function once(id, run) {
+  var el = $(id);
+  el.onclick = function () {
+    if (el.disabled) return;
+    el.disabled = true;
+    var free = function () { el.disabled = false; };
+    try { run(free); } catch (e) { free(); throw e; }
+  };
+}
+
+// ── 1. PIN ──
+once('pin-go', function (free) {
+  var pin = $('pin').value.trim();
+  if (!/^\d{4,6}$/.test(pin)) {
+    say('pin-msg', "That PIN isn't recognized. Try again.", 'bad'); free(); return;
+  }
+  say('pin-msg', '');
+  // The PIN itself never leaves the phone; the shape check above is the only place that sees it.
+  api('login', { pin_h1: sha256(PIN_SALT + ':' + pin) }).then(function (r) {
+    free();
+    if (r.locked) { say('pin-msg', 'Too many tries — locked for 10 minutes. Try again after that.', 'bad'); return; }
+    if (!r.ok) { say('pin-msg', "That PIN isn't recognized. Try again.", 'bad'); $('pin').value = ''; return; }
+    state.token = r.token; state.name = r.name;
+    try { localStorage.setItem(TOKEN_KEY, r.token); localStorage.setItem(NAME_KEY, r.name); } catch (e) {}
+    $('hdr').textContent = 'Added Parts — ' + r.name;
+    $('pin').value = '';
+    show('s-project');
+  }).catch(function () { free(); say('pin-msg', "I couldn't reach the system. Try again.", 'bad'); });
+});
+
+// ── 2. Project ──
+once('proj-go', function (free) {
+  var num = $('proj').value.trim();
+  if (!num) { free(); return; }
+  say('proj-msg', '');
+  api('project', { number: num }).then(function (r) {
+    free();
+    if (r.notFound) { say('proj-msg', "I can't find that project. Check the number and try again.", 'bad'); return; }
+    if (r.locked) { say('proj-msg', 'P-' + r.number + "'s current version is locked. Check with PM before scanning.", 'bad'); return; }
+    state.project = r;
+    state.lines = [];
+    render();
+    $('hdr').textContent = 'Scan — P-' + r.number + ', ' + r.client;
+    show('s-scan');
+    startCamera();
+  }).catch(function () { free(); say('proj-msg', "I couldn't reach the system. Try again.", 'bad'); });
+});
+
+// ── 3. Scan ──
+var lastCode = '', lastAt = 0, stream = null, raf = 0;
+function startCamera() {
+  if (stream) return;
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(function (s) {
+      stream = s;
+      var v = $('view');
+      v.srcObject = s;
+      return v.play();
+    })
+    .then(function () { raf = requestAnimationFrame(tick); })
+    .catch(function (e) {
+      // The error NAME is the whole diagnosis and a screenshot from the field is all we get:
+      // NotAllowedError is a permission refused or not even askable (an opaque origin cannot
+      // prompt, which is what the n8n-served page did), NotFoundError is no camera at all,
+      // NotReadableError is another app holding it. The origin is printed alongside when the page
+      // is not in a proper secure context, because that IS the opaque-origin failure.
+      say('scan-msg', "I can't get to the camera. Allow camera access for this page, then reload.", 'bad');
+      var why = e && e.name ? e.name : 'unknown error';
+      if (!window.isSecureContext || location.origin === 'null') why += ' \u00b7 origin ' + location.origin;
+      var p = document.createElement('p');
+      p.className = 'diag';
+      p.textContent = why;
+      $('scan-msg').firstChild.appendChild(p);
+    });
+}
+function stopCamera() {
+  if (raf) cancelAnimationFrame(raf);
+  raf = 0;
+  if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
+}
+var canvas = document.createElement('canvas');
+function tick() {
+  var v = $('view');
+  if (v.readyState === v.HAVE_ENOUGH_DATA && typeof jsQR === 'function') {
+    canvas.width = v.videoWidth; canvas.height = v.videoHeight;
+    var ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+    var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var hit = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+    if (hit && hit.data) onScan(String(hit.data).trim());
+  }
+  raf = requestAnimationFrame(tick);
+}
+// Exported for the suite: the code out of a scanned URL, or null if it is not one of ours.
+function codeFrom(text) {
+  // Case-insensitive on the PREFIX only: a QR encodes whatever was printed on the label, and a
+  // single uppercase run would otherwise make every scan read as unrecognised. The code itself
+  // keeps its case, because it is case-sensitive to Jetbuilt.
+  var t = String(text);
+  var i = t.toLowerCase().indexOf(LABEL);
+  if (i === -1) return null;
+  var m = t.slice(i + LABEL.length).match(/^([A-Za-z0-9_-]+)/);
+  return m ? m[1] : null;
+}
+// Exported for the suite: the product name and description out of the label page.
+function parseLabel(html) {
+  var text = String(html)
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, '\n').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
+  var lines = text.split('\n').map(function (l) { return l.replace(/\s+/g, ' ').trim(); })
+    .filter(function (l) { return l.length; });
+  var at = -1;
+  for (var i = 0; i < lines.length; i++) if (lines[i].indexOf(MARKER) !== -1) { at = i; break; }
+  if (at === -1) return null;
+  var rest = lines.slice(at + 1).filter(function (l) { return l.indexOf(MARKER) === -1; });
+  if (!rest.length) return null;
+  return { name: rest[0], desc: rest[1] && !/^Installation Date|^For service/i.test(rest[1]) ? rest[1] : '' };
+}
+function buzz() { try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {} }
+
+function onScan(text) {
+  var code = codeFrom(text);
+  if (!code) return;
+  var now = Date.now();
+  if (code === lastCode && now - lastAt < 1500) return;   // one label held in frame is one read
+  lastCode = code; lastAt = now;
+  buzz();
+  $('scan-hint').style.display = 'none';
+  var row = findRow(code);
+  if (row) { row.qty += 1; render(); return; }
+  row = { code: code, qty: 1, name: 'Reading…', desc: '', pending: true };
+  state.lines.push(row);
+  render();
+  // The PHONE reads the label page. If it cannot, the server may still know the code from cache.
+  fetch(LABEL + code, { mode: 'cors', credentials: 'omit' })
+    .then(function (r) { return r.text(); })
+    .then(function (html) { return parseLabel(html); })
+    .catch(function () { return null; })
+    .then(function (label) {
+      return api('resolve', { code: code, label_name: label ? label.name : '', label_desc: label ? label.desc : '' })
+        .then(function (r) { finishRow(row, r, Boolean(label)); });
+    })
+    .catch(function () { finishRow(row, { unknown: true }, true); });
+}
+function findRow(code) {
+  for (var i = 0; i < state.lines.length; i++) if (state.lines[i].code === code) return state.lines[i];
+  return null;
+}
+function finishRow(row, r, labelRead) {
+  row.pending = false;
+  if (r && r.company_product_id) {
+    row.company_product_id = r.company_product_id;
+    row.name = r.product_name;
+    row.desc = r.short_description || '';
+    row.unknown = false;
+  } else {
+    row.unknown = true;
+    row.labelFailed = !labelRead;
+    row.name = labelRead ? "I don't recognize this one." : "Couldn't read that label — try scanning it again, or enter it below.";
+    row.desc = '';
+  }
+  render();
+}
+
+function render() {
+  var ul = $('lines');
+  ul.innerHTML = '';
+  var units = 0;
+  state.lines.forEach(function (row, idx) {
+    units += row.qty;
+    var li = document.createElement('li');
+    var html = '<div class="name">' + esc(row.name) + '</div>';
+    if (row.desc) html += '<div class="desc">' + esc(row.desc) + '</div>';
+    if (row.unknown) {
+      html += '<div class="unk">'
+        + '<label>Manufacturer</label><input class="mf" autocomplete="off">'
+        + '<label>Model</label><input class="md" autocomplete="off">'
+        + '<button class="use">Use this</button></div>';
+    }
+    html += '<div class="qty">'
+      + '<button class="minus" aria-label="one fewer">−</button>'
+      + '<input class="n" type="tel" inputmode="numeric" value="' + row.qty + '">'
+      + '<button class="plus" aria-label="one more">+</button>'
+      + '<button class="rm" aria-label="remove">✕</button></div>';
+    li.innerHTML = html;
+    li.querySelector('.minus').onclick = function () { row.qty = Math.max(1, row.qty - 1); render(); };
+    li.querySelector('.plus').onclick = function () { row.qty += 1; render(); };
+    li.querySelector('.n').onchange = function (e) {
+      var n = parseInt(e.target.value, 10);
+      row.qty = n > 0 ? n : 1;
+      render();
+    };
+    li.querySelector('.rm').onclick = function () { state.lines.splice(idx, 1); render(); };
+    if (row.unknown) {
+      li.querySelector('.use').onclick = function () {
+        var mf = li.querySelector('.mf').value.trim(), md = li.querySelector('.md').value.trim();
+        if (!mf || !md) return;
+        row.name = 'Looking up…'; row.unknown = false; row.pending = true; render();
+        api('resolve', { code: row.code, label_name: mf + ' ' + md })
+          .then(function (r) { finishRow(row, r, true); })
+          .catch(function () { finishRow(row, { unknown: true }, true); });
+      };
+    }
+    ul.appendChild(li);
+  });
+  var usable = state.lines.filter(function (r) { return r.company_product_id; });
+  $('totals').textContent = state.lines.length
+    ? state.lines.length + (state.lines.length === 1 ? ' line, ' : ' lines, ') + units + (units === 1 ? ' unit' : ' units')
+    : '';
+  var go = $('scan-done');
+  go.disabled = !usable.length;
+  go.textContent = usable.length ? 'Done scanning' : 'Scan at least one label';
+}
+
+// ── 4. Review ──
+$('scan-done').onclick = function () {
+  var lines = state.lines.filter(function (r) { return r.company_product_id; })
+    .map(function (r) { return { code: r.code, qty: r.qty, company_product_id: r.company_product_id }; });
+  if (!lines.length) return;
+  stopCamera();
+  say('review-msg', '');
+  $('review').innerHTML = '';
+  $('room-line').textContent = 'Working it out…';
+  show('s-review');
+  api('tally', { project_id: state.project.project_id, lines: lines }).then(function (r) {
+    if (!r || !r.lines) { say('review-msg', "I couldn't work that out. Go back and try again.", 'bad'); return; }
+    state.room = r.room;
+    $('room-line').textContent = 'Going into room: ' + r.room;
+    var ul = $('review');
+    ul.innerHTML = '';
+    r.lines.forEach(function (l) {
+      var li = document.createElement('li');
+      var h = '<div class="name">' + esc(l.product_name) + '</div>';
+      if (l.short_description) h += '<div class="desc">' + esc(l.short_description) + '</div>';
+      h += '<div class="meta">qty ' + l.qty + ' · shelf has ' + l.on_hand
+        + (l.ext_cost == null ? '' : ' · cost $' + Number(l.ext_cost).toFixed(2)) + '</div>';
+      h += '<div class="meta">' + esc(l.from_label || 'the shelf') + ' → ' + esc(r.destination) + '</div>';
+      if (l.short > 0) {
+        h += '<div class="flag">⚠️ stock short by ' + l.short + ' — the project gets all '
+          + l.qty + ', the shelf moves ' + l.moved + ', reconcile the rest.</div>';
+      }
+      li.innerHTML = h;
+      ul.appendChild(li);
+    });
+  }).catch(function () { say('review-msg', "I couldn't work that out. Go back and try again.", 'bad'); });
+};
+$('back').onclick = function () { show('s-scan'); startCamera(); };
+
+// ── 5. Confirm, then poll ──
+$('confirm').onclick = function () {
+  if (state.busy) return;
+  state.busy = true;
+  $('confirm').disabled = true;
+  say('review-msg', '');
+  var lines = state.lines.filter(function (r) { return r.company_product_id; })
+    .map(function (r) { return { code: r.code, qty: r.qty, company_product_id: r.company_product_id }; });
+  api('confirm', { project_id: state.project.project_id, lines: lines }).then(function (r) {
+    if (!r || !r.batch_id) { return failSubmit(); }
+    state.batch = r.batch_id;
+    $('result').innerHTML = '';
+    say('result-msg', '');
+    $('progress').textContent = 'Adding to P-' + state.project.number + '…';
+    $('undo').style.display = '';
+    show('s-result');
+    poll();
+  }).catch(failSubmit);
+};
+function failSubmit() {
+  // Patch: the list is never lost, so this invites a retry rather than a restart.
+  state.busy = false;
+  $('confirm').disabled = false;
+  show('s-review');
+  say('review-msg', "Something went wrong adding these — nothing's lost, your list is still here. Try Confirm again.", 'bad');
+}
+function poll() {
+  api('status', { batch_id: state.batch }).then(function (r) {
+    if (!r) return setTimeout(poll, 2000);
+    if (r.state === 'running' || !r.state) {
+      $('progress').textContent = 'Adding to P-' + state.project.number + '… '
+        + (r.done || 0) + ' of ' + (r.total || 0) + ' done.';
+      return setTimeout(poll, 2000);
+    }
+    state.busy = false;
+    if (r.state === 'failed') return failSubmit();
+    $('progress').textContent = 'Added to room: ' + (r.room || state.room);
+    var ul = $('result');
+    ul.innerHTML = '';
+    (r.lines || []).forEach(function (l) {
+      var li = document.createElement('li');
+      var h = '<div class="name">' + esc(l.product_name) + ' — ' + l.moved + ' moved</div>'
+        + '<div class="meta">' + esc(l.from_label || 'the shelf') + ' → ' + esc(r.destination) + '</div>';
+      if (l.short > 0) {
+        h += '<div class="flag">⚠️ stock short by ' + l.short + ' — the project gets all '
+          + l.qty + ', the shelf moves ' + l.moved + ', reconcile the rest.</div>';
+      }
+      if (l.error) h += '<div class="flag">' + esc(l.error) + '</div>';
+      li.innerHTML = h;
+      ul.appendChild(li);
+    });
+    say('result-msg', r.slack_ok === false
+      ? 'Added to P-' + state.project.number + ". I couldn't post the summary to the inventory channel — check it yourself if you want this logged there."
+      : 'Posted to the inventory channel.');
+    // Patch: the undo button quietly expires, with no message.
+    state.undoUntil = Date.now() + 2 * 60 * 60 * 1000;
+    setTimeout(function () { $('undo').style.display = 'none'; }, 2 * 60 * 60 * 1000);
+  }).catch(function () { setTimeout(poll, 2000); });
+}
+
+$('again').onclick = function () {
+  state.lines = []; state.batch = null;
+  $('undo').style.display = 'none';
+  render();
+  show('s-scan');
+  startCamera();
+};
+$('undo').onclick = function () {
+  if (!state.batch || Date.now() > state.undoUntil) return;
+  if (!confirm('Undo this batch? The items come off P-' + state.project.number
+      + ' and the stock goes back to the shelf.')) return;
+  $('undo').disabled = true;
+  api('undo', { batch_id: state.batch }).then(function (r) {
+    $('undo').disabled = false;
+    if (!r || !r.ok) { say('result-msg', "I couldn't undo that one. Check P-" + state.project.number + ' by hand.', 'bad'); return; }
+    $('undo').style.display = 'none';
+    $('result').innerHTML = '';
+    $('progress').textContent = 'Undone — P-' + state.project.number
+      + "'s items from this batch are zeroed out and the stock is back on the shelf.";
+    say('result-msg', '');
+  }).catch(function () { $('undo').disabled = false; });
+};
+
+// ── remembered device ──
+try {
+  var t = localStorage.getItem(TOKEN_KEY), n = localStorage.getItem(NAME_KEY);
+  if (t) {
+    state.token = t; state.name = n;
+    $('hdr').textContent = 'Added Parts — ' + (n || '');
+    show('s-project');
+  }
+} catch (e) {}
+window.__ap = { codeFrom: codeFrom, parseLabel: parseLabel, state: state };
+</script>
+</body>
+</html>
