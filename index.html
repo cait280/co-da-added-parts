@@ -30,6 +30,10 @@ button.danger{background:var(--card);color:var(--bad);border:1px solid var(--lin
 .msg.bad{border-color:var(--bad);color:#ffd9d9}
 .msg.warn{border-color:var(--warn)}
 #view{width:100%;border-radius:14px;background:#000;aspect-ratio:4/3;object-fit:cover;display:block}
+/* box-shadow, not a border: a border would reflow the whole list every time a label enters frame */
+#view.seen{box-shadow:0 0 0 3px var(--ok)}
+.sight{min-height:21px;margin:8px 0 0;font-size:15px;font-weight:650;text-align:center;color:var(--ok)}
+#capture{font-size:19px;padding:18px}
 .hint{color:var(--dim);font-size:14px;text-align:center;margin:8px 0 0}
 .diag{color:var(--dim);font-size:12px;margin:8px 0 0;word-break:break-word}
 ul{list-style:none;margin:16px 0 0;padding:0}
@@ -67,6 +71,8 @@ li{background:var(--card);border:1px solid var(--line);border-radius:14px;paddin
 
   <section id="s-scan" class="screen">
     <video id="view" playsinline muted autoplay></video>
+    <p class="sight" id="sight"></p>
+    <button id="capture" disabled>Capture</button>
     <p class="hint" id="scan-hint">Point the camera at a label.</p>
     <div id="scan-msg"></div>
     <ul id="lines"></ul>
@@ -262,7 +268,24 @@ once('proj-go', function (free) {
 });
 
 // ── 3. Scan ──
-var lastCode = '', lastAt = 0, stream = null, raf = 0;
+// PRESS TO CAPTURE (v2c). The first field run auto-added every code the camera decoded and then
+// kept bumping the quantity while the label sat in view, so one label became several units. The
+// decoder still runs continuously, but it only ever SIGHTS a code: the viewfinder goes green, the
+// caption names the product once the lookup answers, and Capture arms. Nothing reaches the list
+// until Capture is tapped, and one tap is exactly one unit. There is no debounce timer anywhere
+// in the add path any more -- the gate is the tap, and `sighting.captured` is what closes it
+// until the label leaves the frame or a different one appears.
+var stream = null, raf = 0;
+// What is in frame right now, and whether it has already been taken.
+var sighting = null;
+// code -> what the lookup said, so a second capture of the same label needs no second lookup and
+// a row captured before the answer arrives still gets filled in.
+var known = {}, looking = {};
+// jsQR misses single frames constantly (motion blur, focus hunting). Clearing the sighting on the
+// first miss would strobe the green frame and disarm the button under the operator's thumb, so a
+// short run of misses is what counts as "the label left". This paces the VIEWFINDER only; it can
+// never add anything, which is what the old 1.5 s debounce was doing.
+var misses = 0, MISS_FRAMES = 8;
 function startCamera() {
   if (stream) return;
   navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
@@ -302,7 +325,9 @@ function tick() {
     ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
     var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
     var hit = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
-    if (hit && hit.data) onScan(String(hit.data).trim());
+    var code = hit && hit.data ? codeFrom(String(hit.data).trim()) : null;
+    if (code) { misses = 0; onSight(code); }
+    else if (sighting && ++misses > MISS_FRAMES) onLost();
   }
   raf = requestAnimationFrame(tick);
 }
@@ -333,48 +358,94 @@ function parseLabel(html) {
 }
 function buzz() { try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {} }
 
-function onScan(text) {
-  var code = codeFrom(text);
-  if (!code) return;
-  var now = Date.now();
-  if (code === lastCode && now - lastAt < 1500) return;   // one label held in frame is one read
-  lastCode = code; lastAt = now;
+// A code has come into frame (or a different one has replaced it).
+function onSight(code) {
+  if (sighting && sighting.code === code) return;      // the same label, still being held up
+  sighting = { code: code, captured: false };
+  paintSight();
+  // Fired on SIGHT so the name is on screen by the time the thumb arrives. It creates no row.
+  look(code);
+}
+function onLost() {
+  sighting = null;
+  misses = 0;
+  paintSight();
+}
+function paintSight() {
+  var cap = $('capture');
+  $('view').classList[sighting ? 'add' : 'remove']('seen');
+  if (!sighting) { $('sight').textContent = ''; cap.disabled = true; return; }
+  var k = known[sighting.code];
+  cap.disabled = sighting.captured;
+  $('sight').textContent = sighting.captured ? 'Captured. Move to the next label.'
+    : k ? (k.unknown ? "I don't recognize this one." : k.name)
+    : 'Label found';
+}
+// One tap, one unit. The guard is `captured`, not a timer, so a held label and a long press both
+// do nothing until the label leaves the frame or another one takes its place.
+$('capture').onclick = function () {
+  if (!sighting || sighting.captured) return;
+  var code = sighting.code;
+  sighting.captured = true;
   buzz();
   $('scan-hint').style.display = 'none';
   var row = findRow(code);
-  if (row) { row.qty += 1; render(); return; }
-  row = { code: code, qty: 1, name: 'Reading…', desc: '', pending: true };
-  state.lines.push(row);
+  if (row) row.qty += 1;
+  else {
+    row = { code: code, qty: 1, name: 'Reading…', desc: '', pending: true };
+    if (known[code]) applyKnown(row, known[code]);
+    state.lines.push(row);
+  }
   render();
-  // The PHONE reads the label page. If it cannot, the server may still know the code from cache.
+  paintSight();
+  look(code);                                           // a no-op if it is already known
+};
+// The PHONE reads the label page. If it cannot, the server may still know the code from cache.
+function look(code) {
+  if (known[code] || looking[code]) return;
+  looking[code] = true;
   fetch(LABEL + code, { mode: 'cors', credentials: 'omit' })
     .then(function (r) { return r.text(); })
     .then(function (html) { return parseLabel(html); })
     .catch(function () { return null; })
     .then(function (label) {
       return api('resolve', { code: code, label_name: label ? label.name : '', label_desc: label ? label.desc : '' })
-        .then(function (r) { finishRow(row, r, Boolean(label)); });
+        .then(function (r) { learn(code, knownFrom(r, Boolean(label))); });
     })
-    .catch(function () { finishRow(row, { unknown: true }, true); });
+    .catch(function () { learn(code, knownFrom(null, true)); });
+}
+function knownFrom(r, labelRead) {
+  return (r && r.company_product_id)
+    ? { company_product_id: r.company_product_id, name: r.product_name,
+        desc: r.short_description || '' }
+    : { unknown: true, labelFailed: !labelRead };
+}
+function learn(code, k) {
+  looking[code] = false;
+  known[code] = k;
+  var row = findRow(code);
+  if (row) { applyKnown(row, k); render(); }
+  if (sighting && sighting.code === code) paintSight();
+}
+function applyKnown(row, k) {
+  row.pending = false;
+  if (k.unknown) {
+    row.unknown = true;
+    row.labelFailed = Boolean(k.labelFailed);
+    row.company_product_id = undefined;
+    row.name = k.labelFailed ? "Couldn't read that label — try scanning it again, or enter it below."
+      : "I don't recognize this one.";
+    row.desc = '';
+  } else {
+    row.unknown = false;
+    row.company_product_id = k.company_product_id;
+    row.name = k.name;
+    row.desc = k.desc;
+  }
 }
 function findRow(code) {
   for (var i = 0; i < state.lines.length; i++) if (state.lines[i].code === code) return state.lines[i];
   return null;
-}
-function finishRow(row, r, labelRead) {
-  row.pending = false;
-  if (r && r.company_product_id) {
-    row.company_product_id = r.company_product_id;
-    row.name = r.product_name;
-    row.desc = r.short_description || '';
-    row.unknown = false;
-  } else {
-    row.unknown = true;
-    row.labelFailed = !labelRead;
-    row.name = labelRead ? "I don't recognize this one." : "Couldn't read that label — try scanning it again, or enter it below.";
-    row.desc = '';
-  }
-  render();
 }
 
 function render() {
@@ -412,8 +483,8 @@ function render() {
         if (!mf || !md) return;
         row.name = 'Looking up…'; row.unknown = false; row.pending = true; render();
         api('resolve', { code: row.code, label_name: mf + ' ' + md })
-          .then(function (r) { finishRow(row, r, true); })
-          .catch(function () { finishRow(row, { unknown: true }, true); });
+          .then(function (r) { learn(row.code, knownFrom(r, true)); })
+          .catch(function () { learn(row.code, knownFrom(null, true)); });
       };
     }
     ul.appendChild(li);
@@ -436,9 +507,17 @@ $('scan-done').onclick = function () {
   say('review-msg', '');
   $('review').innerHTML = '';
   $('room-line').textContent = 'Working it out…';
+  // Nothing is confirmable until the tally comes back, so Confirm starts off and is armed only by
+  // a reply that actually has lines in it.
+  $('confirm').disabled = true;
   show('s-review');
   api('tally', { project_id: state.project.project_id, lines: lines }).then(function (r) {
-    if (!r || !r.lines) { say('review-msg', "I couldn't work that out. Go back and try again.", 'bad'); return; }
+    // The server's own message says WHICH thing is wrong ("I can't find the Staging On-Jobsite
+    // location in Jetbuilt"); mine said only that something was. Pass it through, and keep the
+    // generic line for the cases where there is nothing to pass on.
+    if (r && r.error) return tallyFailed(r.error);
+    if (!r || !r.lines) return tallyFailed(null);
+    $('confirm').disabled = false;
     state.room = r.room;
     $('room-line').textContent = 'Going into room: ' + r.room;
     var ul = $('review');
@@ -457,20 +536,31 @@ $('scan-done').onclick = function () {
       li.innerHTML = h;
       ul.appendChild(li);
     });
-  }).catch(function () { say('review-msg', "I couldn't work that out. Go back and try again.", 'bad'); });
+  }).catch(function () { tallyFailed(null); });
 };
-$('back').onclick = function () { show('s-scan'); startCamera(); };
+function tallyFailed(text) {
+  // Confirm is WITHDRAWN, not left armed. Letting it fire after a failed tally is how exec 13109
+  // reached a confirm with no destination, which answered nothing useful, posted an empty summary
+  // to the inventory channel and left a junk batch row behind.
+  state.room = null;
+  $('review').innerHTML = '';
+  $('room-line').textContent = '';
+  $('confirm').disabled = true;
+  say('review-msg', text || "I couldn't work that out. Go back and try again.", 'bad');
+}
+$('back').onclick = function () { onLost(); show('s-scan'); startCamera(); };
 
 // ── 5. Confirm, then poll ──
 $('confirm').onclick = function () {
-  if (state.busy) return;
+  if (state.busy || $('confirm').disabled) return;
   state.busy = true;
   $('confirm').disabled = true;
   say('review-msg', '');
   var lines = state.lines.filter(function (r) { return r.company_product_id; })
     .map(function (r) { return { code: r.code, qty: r.qty, company_product_id: r.company_product_id }; });
   api('confirm', { project_id: state.project.project_id, lines: lines }).then(function (r) {
-    if (!r || !r.batch_id) { return failSubmit(); }
+    if (r && r.error) return failSubmit(r.error);
+    if (!r || !r.batch_id) return failSubmit(null);
     state.batch = r.batch_id;
     $('result').innerHTML = '';
     say('result-msg', '');
@@ -478,14 +568,16 @@ $('confirm').onclick = function () {
     $('undo').style.display = '';
     show('s-result');
     poll();
-  }).catch(failSubmit);
+  }).catch(function () { failSubmit(null); });
 };
-function failSubmit() {
-  // Patch: the list is never lost, so this invites a retry rather than a restart.
+function failSubmit(text) {
+  // Patch: the list is never lost, so this invites a retry rather than a restart. A message FROM
+  // the server replaces that line when there is one -- it says what to do about it.
   state.busy = false;
   $('confirm').disabled = false;
   show('s-review');
-  say('review-msg', "Something went wrong adding these — nothing's lost, your list is still here. Try Confirm again.", 'bad');
+  say('review-msg', text
+    || "Something went wrong adding these — nothing's lost, your list is still here. Try Confirm again.", 'bad');
 }
 function poll() {
   api('status', { batch_id: state.batch }).then(function (r) {
@@ -496,7 +588,7 @@ function poll() {
       return setTimeout(poll, 2000);
     }
     state.busy = false;
-    if (r.state === 'failed') return failSubmit();
+    if (r.state === 'failed') return failSubmit(r.error || null);
     $('progress').textContent = 'Added to room: ' + (r.room || state.room);
     var ul = $('result');
     ul.innerHTML = '';
@@ -523,6 +615,7 @@ function poll() {
 
 $('again').onclick = function () {
   state.lines = []; state.batch = null;
+  onLost();
   $('undo').style.display = 'none';
   render();
   show('s-scan');
@@ -553,7 +646,10 @@ try {
     show('s-project');
   }
 } catch (e) {}
-window.__ap = { codeFrom: codeFrom, parseLabel: parseLabel, state: state };
+// The seam the suite drives: sighting a code and losing it are what tick() does with a decoded
+// frame, and faking a canvas + jsQR to reach them would test the fake, not the gate.
+window.__ap = { codeFrom: codeFrom, parseLabel: parseLabel, state: state,
+  sight: onSight, lost: onLost, known: function () { return known; } };
 </script>
 </body>
 </html>
