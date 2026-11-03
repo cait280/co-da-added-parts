@@ -4,74 +4,203 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CO-DA Inventory">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#101418">
-<title>Added Parts</title>
+<meta name="theme-color" content="#0A0909">
+<title>CO-DA Inventory</title>
+<!-- Gotham is licensed and cannot be embedded, so headings use Montserrat -- the standard Gotham
+     stand-in -- with co-da.com's own uppercase + tracking, and body copy uses Open Sans as the
+     site does. One request, display=swap, and a system-ui fallback below so the page still reads
+     at full speed on a warehouse connection or offline from the home screen. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Open+Sans:wght@400;600&display=swap">
 <style>
-:root{--bg:#101418;--card:#192027;--line:#2a3440;--text:#eef2f6;--dim:#9fb0c0;--accent:#4c9aff;--warn:#ffb020;--bad:#ff5c5c;--ok:#39c07c}
+/* ── CO-DA, read off co-da.com: near-black, white, greys, ONE accent in copper. No gradients,
+   one soft shadow, 1px hairlines, a lot of air. Light only for v1. ───────────────────────── */
+:root{
+  --ink:#0A0909;            /* the dark band, and every black pill */
+  --paper:#F7F7F7;          /* page */
+  --card:#FFFFFF;
+  --line:#E5E5E5;           /* hairline on light */
+  --line-dark:rgba(255,255,255,.2);
+  --text:#0A0909;
+  --body:#6D6D6D;           /* body copy, as the site sets it */
+  --mute:#989898;
+  --soft:#CCCCCC;           /* placeholders, the lightest grey the site uses */
+  --copper:#9B5F42;         /* the one accent, used sparingly */
+  --bad:#A3342B;
+  --ok:#39C07C;             /* the scan frame stays green: that is function, not decoration */
+  --head:'Montserrat',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+  --sans:'Open Sans',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
-  font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
-header{position:sticky;top:0;z-index:5;background:var(--bg);padding:14px 16px 10px;border-bottom:1px solid var(--line)}
-h1{margin:0;font-size:19px;font-weight:650}
-main{padding:16px;padding-bottom:120px;max-width:620px;margin:0 auto}
+html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden;background:var(--paper);
+  color:var(--text);font:400 16px/1.5 var(--sans);letter-spacing:.28px;
+  -webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+/* The band bleeds to the edges and under the status bar, so the home-screen clip reads dark;
+   the side insets are applied to the content instead of the body. */
+header{position:sticky;top:0;z-index:5;background:var(--ink);
+  padding:calc(12px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 11px
+          calc(16px + env(safe-area-inset-left));
+  border-bottom:1px solid var(--line-dark);display:flex;align-items:center;gap:8px 14px;
+  flex-wrap:wrap}
+/* The wordmark's ALT text is the fallback: if the PNG does not load, Safari renders "CO-DA" in
+   this element's own font, which is the tracked Montserrat the brief asks for -- no script. */
+.wordmark{height:22px;width:auto;flex:none;
+  font:600 17px/22px var(--head);text-transform:uppercase;letter-spacing:.18em;color:#fff}
+/* Right of the wordmark when it fits, on its own line beneath when it does not, and WRAPPING
+   within that line when the line itself is not enough -- "INVENTORY - ADDED PARTS - ANDREW
+   CATRON" at this tracking is wider than a 390px screen, so it needs all three. nowrap was wrong
+   here: it stopped the wrap and the title clipped at the right edge instead ("ANDREW CATRO").
+   Nothing is ever truncated and there is no ellipsis; the natural break lands at one of the
+   " - " separators, so the operator's name falls onto its own line. min-width:0 is what lets a
+   flex item wrap below the width of its own content at all. */
+h1{margin:0 0 0 auto;min-width:0;font:500 11px/1.4 var(--head);text-transform:uppercase;
+  letter-spacing:.2em;color:#fff;text-align:right;white-space:normal}
+/* One segment of the band. Unbreakable, so a wrap can only ever happen at a separator -- which
+   is what puts the operator's name on its own line instead of splitting it in half. */
+.seg{white-space:nowrap}
+/* ...and if a single segment is wider than the line on its own, it breaks rather than clips. */
+.seg{overflow-wrap:break-word}
+main{padding:22px calc(16px + env(safe-area-inset-right))
+     calc(120px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+  max-width:620px;margin:0 auto}
 .screen{display:none}.screen.on{display:block}
-label{display:block;font-size:13px;color:var(--dim);margin:0 0 6px}
-input{width:100%;padding:14px;font-size:17px;background:var(--card);color:var(--text);
-  border:1px solid var(--line);border-radius:12px}
-input:focus{outline:2px solid var(--accent);outline-offset:-1px}
-button{font:inherit;font-weight:600;border:0;border-radius:12px;padding:15px 18px;background:var(--accent);
-  color:#06101c;width:100%;margin-top:12px}
-button[disabled]{opacity:.45}
-button.ghost{background:var(--card);color:var(--text);border:1px solid var(--line)}
-button.danger{background:var(--card);color:var(--bad);border:1px solid var(--line)}
-.msg{margin:12px 0;padding:12px 14px;border-radius:12px;background:var(--card);border:1px solid var(--line)}
-.msg.bad{border-color:var(--bad);color:#ffd9d9}
-.msg.warn{border-color:var(--warn)}
-#view{width:100%;border-radius:14px;background:#000;aspect-ratio:4/3;object-fit:cover;display:block}
+/* ── cards ── */
+.card,li,.msg{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 8px 24px rgba(0,0,0,.06)}
+.card{padding:20px 16px}
+.msg{margin:14px 0;padding:14px 16px;font-size:15px;color:var(--text);box-shadow:none}
+/* An error keeps a red hairline so it reads as one at arm's length; everything else that needs
+   attention uses the one accent rather than a second colour. */
+.msg.bad{border-left:2px solid var(--bad);color:var(--bad)}
+.msg.warn{border-left:2px solid var(--copper)}
+/* The handoff line is the one thing still to be done, so it carries the accent. */
+#todo-msg .msg{border-left:2px solid var(--copper)}
+/* ── type ── */
+label{display:block;font:500 11px/1.4 var(--head);text-transform:uppercase;letter-spacing:.22em;
+  color:var(--body);margin:0 0 10px}
+input{width:100%;padding:15px 16px;font:400 17px/1.3 var(--sans);background:var(--card);
+  color:var(--text);border:1px solid var(--line);border-radius:12px}
+#pin{text-align:center;letter-spacing:.5em;font-size:22px}
+::placeholder{color:var(--soft)}
+/* ── buttons: pills. Black on light, ghost is a 1px outline, disabled only loses opacity. ── */
+button{font:600 13px/1 var(--head);text-transform:uppercase;letter-spacing:.18em;border:1px solid var(--ink);
+  border-radius:999px;padding:18px;background:var(--ink);color:#fff;width:100%;margin-top:14px;
+  min-height:52px}
+button[disabled]{opacity:.35}
+button.ghost{background:transparent;color:var(--ink)}
+/* Destructive, but never a red block: a ghost pill in the accent. */
+button.danger{background:transparent;color:var(--copper);border-color:rgba(155,95,66,.45)}
+:focus-visible{outline:2px solid var(--copper);outline-offset:2px}
+input:focus{outline:2px solid var(--copper);outline-offset:-1px}
+/* ── the viewfinder: a dark panel, the caption on a strip across the foot of it ── */
+.viewfinder{position:relative;border-radius:16px;background:var(--ink);overflow:visible}
+#view{width:100%;border-radius:16px;background:#000;aspect-ratio:4/3;object-fit:cover;display:block}
 /* box-shadow, not a border: a border would reflow the whole list every time a label enters frame */
 #view.seen{box-shadow:0 0 0 3px var(--ok)}
-.sight{min-height:21px;margin:8px 0 0;font-size:15px;font-weight:650;text-align:center;color:var(--ok)}
-#capture{font-size:19px;padding:18px}
-.hint{color:var(--dim);font-size:14px;text-align:center;margin:8px 0 0}
-.diag{color:var(--dim);font-size:12px;margin:8px 0 0;word-break:break-word}
-ul{list-style:none;margin:16px 0 0;padding:0}
-li{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px}
-.name{font-weight:650}
-.desc{color:var(--dim);font-size:14px;margin-top:2px}
-.meta{color:var(--dim);font-size:14px;margin-top:6px}
-.flag{color:var(--warn);font-size:14px;margin-top:6px}
-.qty{display:flex;align-items:center;gap:12px;margin-top:10px}
-.qty button{width:46px;height:46px;margin:0;padding:0;font-size:22px;background:var(--bg);
-  border:1px solid var(--line);color:var(--text);border-radius:12px}
-.qty input{width:72px;text-align:center;padding:10px}
-.qty .rm{margin-left:auto;color:var(--bad);background:transparent;border:0;width:44px}
-.totals{color:var(--dim);margin-top:14px;font-size:15px}
+.sight{position:absolute;left:0;right:0;bottom:0;margin:0;padding:12px 14px;
+  font:500 12px/1.3 var(--head);text-transform:uppercase;letter-spacing:.2em;text-align:center;
+  color:#fff;background:rgba(10,9,9,.72);border-radius:0 0 16px 16px;
+  -webkit-backdrop-filter:saturate(140%) blur(2px);backdrop-filter:saturate(140%) blur(2px)}
+.sight:empty{display:none}
+#capture{font-size:14px;padding:19px}
+.hint{color:var(--body);font-size:13px;text-align:center;margin:12px 0 0}
+.diag{color:var(--mute);font-size:13px;margin:8px 0 0;word-break:break-word}
+/* ── rows ── */
+ul{list-style:none;margin:18px 0 0;padding:0}
+li{padding:14px 16px;margin-bottom:12px}
+.name{font:500 15px/1.35 var(--head);letter-spacing:.01em;color:var(--text)}
+.desc{color:var(--body);font-size:13px;margin-top:3px}
+.meta{color:var(--body);font-size:13px;margin-top:8px}
+.flag{color:var(--copper);font-size:13px;margin-top:8px}
+.unk{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.qty{display:flex;align-items:center;gap:10px;margin-top:14px}
+/* 44px round ghost controls: the tap target IS the circle, which is what a glove needs. */
+.qty button{width:44px;height:44px;min-height:44px;flex:none;margin:0;padding:0;font-size:19px;
+  letter-spacing:0;background:transparent;border:1px solid var(--line);color:var(--text);
+  border-radius:50%}
+.qty input{width:74px;text-align:center;padding:11px;font-size:16px}
+.qty .rm{margin-left:auto;color:var(--copper);border-color:rgba(155,95,66,.35)}
+/* ── the on-page header: what THIS screen is, under the band that says where you are ──
+   Title case, not the band's uppercase: these carry a client name ("Scan - P-3268, [DEV USE
+   ONLY] Museum") and tracked caps make a client harder to read at arm's length, which is the
+   one thing on the screen the operator has to check. The band directly above it is doing the
+   brand's caps-and-tracking work. */
+.hdr2{margin:0 0 16px;font:500 19px/1.3 var(--head);letter-spacing:.01em;color:var(--text)}
+.hdr2:empty{display:none}
+.hi{margin:-8px 0 18px;font:400 15px/1.4 var(--sans);color:var(--body)}
+.hi:empty{display:none}
+/* a form's own heading inside a card ("Set a PIN for Mounir Wissa") */
+.formhdr{margin:0 0 14px;font:500 15px/1.35 var(--head);letter-spacing:.01em;color:var(--text)}
+/* the two per-user controls sit side by side and stay a 44px target */
+#admin-users .row2 button{margin-top:12px;padding:13px 8px;font-size:11px;letter-spacing:.12em}
+/* ── Home: one card per tool, the whole card is the tap target ── */
+#tools li{padding:0;overflow:hidden}
+button.tool{display:block;width:100%;margin:0;padding:20px 18px;text-align:left;
+  background:var(--card);color:var(--text);border:0;border-radius:14px;min-height:88px;
+  text-transform:none;letter-spacing:normal;font:inherit}
+button.tool .name{display:block;font:500 17px/1.3 var(--head);text-transform:uppercase;
+  letter-spacing:.14em}
+button.tool .desc{display:block;color:var(--body);font:400 13px/1.5 var(--sans);margin-top:6px}
+/* The one accent again: a tool that is listed but not built yet says so in copper rather than
+   looking like a card that failed to load. */
+button.tool .soon{display:inline-block;margin-top:12px;font:600 10px/1 var(--head);
+  text-transform:uppercase;letter-spacing:.2em;color:var(--copper);
+  border:1px solid rgba(155,95,66,.45);border-radius:999px;padding:6px 10px}
+button.tool[disabled]{opacity:1}
+button.tool[disabled] .name,button.tool[disabled] .desc{opacity:.45}
+.totals{color:var(--mute);margin-top:16px;font-size:12px;letter-spacing:.06em}
 .row2{display:flex;gap:10px}.row2 button{flex:1}
 </style>
 </head>
 <body>
-<header><h1 id="hdr">Added Parts</h1></header>
+<header>
+  <img class="wordmark" src="https://co-da.com/wp-content/uploads/2020/10/CO-DA-main_wht.png" alt="CO-DA" width="130" height="22">
+  <h1 id="hdr">Inventory</h1>
+</header>
 <main>
 
   <section id="s-pin" class="screen on">
-    <label for="pin">Enter your PIN</label>
-    <input id="pin" type="tel" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="••••">
-    <button id="pin-go">Continue</button>
+    <h2 class="hdr2">CO-DA Inventory</h2>
+    <div class="card">
+      <label for="pin">Enter your PIN</label>
+      <input id="pin" type="tel" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="••••">
+      <button id="pin-go">Continue</button>
+    </div>
     <div id="pin-msg"></div>
   </section>
 
+  <!-- The portal's front door. The cards are rendered from the TOOLS array in the script, so a
+       third tool is one entry there and nothing here. -->
+  <section id="s-home" class="screen">
+    <h2 class="hdr2">Home</h2>
+    <p class="hi" id="home-hi"></p>
+    <ul id="tools"></ul>
+    <div id="home-msg"></div>
+  </section>
+
   <section id="s-project" class="screen">
-    <label for="proj">Project number</label>
-    <input id="proj" type="text" inputmode="numeric" autocomplete="off" placeholder="Project number">
-    <button id="proj-go">Continue</button>
+    <h2 class="hdr2">Which project or ticket?</h2>
+    <div class="card">
+      <label for="proj">Project or ticket number</label>
+      <input id="proj" type="text" autocomplete="off" placeholder="Project or ticket number">
+      <button id="proj-go">Continue</button>
+      <div id="which" hidden>
+        <p class="hint" id="which-ask"></p>
+        <button id="is-project">Project</button>
+        <button id="is-ticket" class="ghost">Ticket</button>
+      </div>
+    </div>
     <div id="proj-msg"></div>
+    <button id="proj-home" class="ghost">Home</button>
   </section>
 
   <section id="s-scan" class="screen">
-    <video id="view" playsinline muted autoplay></video>
-    <p class="sight" id="sight"></p>
+    <h2 class="hdr2" id="scan-hdr"></h2>
+    <div class="viewfinder">
+      <video id="view" playsinline muted autoplay></video>
+      <p class="sight" id="sight"></p>
+    </div>
     <button id="capture" disabled>Capture</button>
     <p class="hint" id="scan-hint">Point the camera at a label.</p>
     <div id="scan-msg"></div>
@@ -81,6 +210,7 @@ li{background:var(--card);border:1px solid var(--line);border-radius:14px;paddin
   </section>
 
   <section id="s-review" class="screen">
+    <h2 class="hdr2" id="review-hdr"></h2>
     <div class="msg" id="room-line"></div>
     <div id="review-msg"></div>
     <ul id="review"></ul>
@@ -88,12 +218,43 @@ li{background:var(--card);border:1px solid var(--line);border-radius:14px;paddin
     <button id="back" class="ghost">Back</button>
   </section>
 
+  <!-- Admin (§11). Shown only to an admin, and every action on it is re-checked server side. -->
+  <section id="s-admin" class="screen">
+    <h2 class="hdr2">Admin</h2>
+    <div id="admin-msg"></div>
+    <ul id="admin-users"></ul>
+    <div class="card" id="admin-pin-form" hidden>
+      <p class="formhdr" id="admin-pin-who"></p>
+      <label for="admin-pin1">New PIN</label>
+      <input id="admin-pin1" type="tel" inputmode="numeric" maxlength="6" autocomplete="off">
+      <label for="admin-pin2">Confirm PIN</label>
+      <input id="admin-pin2" type="tel" inputmode="numeric" maxlength="6" autocomplete="off">
+      <p class="hint">4 to 6 digits, numbers only.</p>
+      <button id="admin-pin-go">Set PIN</button>
+      <button id="admin-pin-cancel" class="ghost">Cancel</button>
+    </div>
+    <button id="admin-add" class="ghost">Add user</button>
+    <div class="card" id="admin-add-form" hidden>
+      <label for="admin-name">Full name</label>
+      <input id="admin-name" type="text" autocomplete="off" placeholder="e.g. Mounir Wissa">
+      <label for="admin-slack">Slack ID</label>
+      <input id="admin-slack" type="text" autocomplete="off" placeholder="e.g. U2V2C3KQ9">
+      <button id="admin-add-go">Add user</button>
+      <button id="admin-add-cancel" class="ghost">Cancel</button>
+    </div>
+    <button id="admin-home" class="ghost">Home</button>
+  </section>
+
   <section id="s-result" class="screen">
     <div class="msg" id="progress"></div>
     <ul id="result"></ul>
     <div id="result-msg"></div>
+    <div id="todo-msg"></div>
     <button id="again">New batch</button>
     <button id="undo" class="danger">Undo this batch</button>
+    <!-- Hidden until the batch reaches a finished state; never on Scan or Review, so a batch in
+         flight cannot be abandoned by a stray tap. -->
+    <button id="result-home" class="ghost" style="display:none">Home</button>
   </section>
 
 </main>
@@ -117,14 +278,40 @@ li{background:var(--card);border:1px solid var(--line);border-radius:14px;paddin
 var API = 'https://co-da.app.n8n.cloud/webhook/added-parts-mrtjqxp76jy/api';
 var LABEL = 'https://jetbui.lt/i/';
 var MARKER = 'This asset is being tracked within the Jetbuilt Project Platform';
-var TOKEN_KEY = 'ap.token', NAME_KEY = 'ap.name';
 // The PIN is hashed here, on the phone, before it is sent: n8n's execution data held it in clear
 // (13080, 13081, 13086, 13089). This string is PART OF THE STORED CREDENTIAL, not a tuning knob
 // -- changing it invalidates every pin_hash in cody_added_parts_users and needs a reseed.
 var PIN_SALT = 'co-da.added-parts';
 
-var state = { token: null, name: null, project: null, lines: [], batch: null, room: null,
-  undoUntil: 0, busy: false };
+// ── the portal ───────────────────────────────────────────────────────────────────────────────
+// §10: the page is an inventory portal and Added Parts is the first tool in it. Every string the
+// portal itself owns lives HERE, in one object, because Patch's §7c copy replaces all of it
+// verbatim in one edit -- these are placeholders until it lands. The Scan, Review and Result
+// headers are NOT in here: those are his final §7b strings and they do not change.
+// Patch's §7c, verbatim. Written title case: the band's CSS does the uppercase (§9).
+var PORTAL = {
+  band: 'Inventory',          // the band is WHERE you are: Inventory [— tool] [— operator]
+  segment: 'Added Parts',     // inserted once a tool is open, and taken back out at Home
+  hi: 'Hi ',                  // Home's welcome line, first name only, or no line at all
+  home: 'Home',               // the ghost button, on Project and a finished Result only
+  soon: 'Coming soon',        // a tag on the card, never a button
+};
+// One entry per tool. A third tool is one more line here and nothing else: the cards, the tap
+// handlers and the disabled state all come off this list. Card copy is Patch's.
+var TOOLS = [
+  { id: 'added-parts', name: 'Added Parts', ready: true,
+    desc: 'Scan parts and add them to a project or a ticket.' },
+  { id: 'return-to-stock', name: 'Return to Stock', ready: false,
+    desc: 'Scan a part coming back from a job, put it back on the shelf, and take it off the '
+      + 'project.' },
+  // Shown only to an admin. Hiding it is convenience: every admin action is re-checked against
+  // the caller's users row server side, so an operator who reaches one anyway is refused there.
+  { id: 'admin', name: 'Admin', ready: true, admin: true,
+    desc: "Set PIN codes and turn anyone's access on or off." },
+];
+
+var state = { token: null, name: null, role: '', project: null, lines: [], batch: null,
+  room: null, undoUntil: 0, busy: false };
 
 var $ = function (id) { return document.getElementById(id); };
 var show = function (id) {
@@ -137,6 +324,190 @@ var say = function (where, text, kind) {
   if (text) $(where).firstChild.textContent = text;
 };
 var esc = function (s) { var d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; };
+// The one place that writes the header band. It is composed, not a table of strings: the portal
+// name, the tool segment if a tool is open, and the operator once the PIN has succeeded. Four of
+// the six screens share one value because the band does not re-state screen-level detail (§7c).
+var band = function (segment) {
+  var parts = [PORTAL.band, segment || '', state.name || ''].filter(Boolean);
+  var el = $('hdr');
+  // textContent FIRST, so the element's text is the plain composed string and anything reading it
+  // -- a test, a screenshot tool, a screen reader -- sees exactly what Patch wrote.
+  el.textContent = parts.join(' — ');
+  // Then the same string again as one nowrap span per segment, separated by a real space. The
+  // band is too wide for a phone once a tool and a full name are both in it, and left to wrap
+  // on its own the break landed inside the NAME ("ANDREW / CATRON"). The only break
+  // opportunities now are the spaces BETWEEN segments, so a segment is never split and the
+  // operator's name drops whole onto its own line. In a browser this leaves textContent
+  // identical to the line above; nothing is added, removed or reordered.
+  if (parts.length > 1) {
+    el.innerHTML = parts.map(function (part, i) {
+      return '<span class="seg">' + esc(part) + (i < parts.length - 1 ? ' —' : '') + '</span>';
+    }).join(' ');
+  }
+};
+
+// ── Home ─────────────────────────────────────────────────────────────────────────────────────
+// "Hi Andrew." First name only, and ONLY when the users table resolved one -- no generic
+// "Welcome" filler for a session that cannot say who it belongs to (Patch).
+function home() {
+  var first = String(state.name || '').trim().split(/\s+/)[0] || '';
+  $('home-hi').textContent = first ? PORTAL.hi + first + '.' : '';
+}
+function renderTools() {
+  var shown = TOOLS.filter(function (t) { return !t.admin || state.role === 'admin'; });
+  $('tools').innerHTML = shown.map(function (t) {
+    return '<li><button class="tool" id="tool-' + t.id + '"' + (t.ready ? '' : ' disabled') + '>'
+      + '<span class="name">' + esc(t.name) + '</span>'
+      + '<span class="desc">' + esc(t.desc) + '</span>'
+      + (t.ready ? '' : '<span class="soon">' + esc(PORTAL.soon) + '</span>')
+      + '</button></li>';
+  }).join('');
+  // A tool that is not ready gets NO handler at all, not a handler that refuses: there is nothing
+  // behind Return to Stock yet and a tap that appears to do something is worse than one that does
+  // not respond.
+  shown.forEach(function (t) {
+    if (!t.ready) return;
+    $('tool-' + t.id).onclick = function () { openTool(t.id); };
+  });
+}
+function openTool(id) {
+  if (id === 'admin') return openAdmin();
+  if (id !== 'added-parts') return;
+  // A fresh start every time, so a tool entered twice never shows the last run's list.
+  state.project = null;
+  state.lines = [];
+  state.batch = null;
+  $('proj').value = '';
+  $('which').hidden = true;
+  say('proj-msg', '');
+  band(PORTAL.segment);
+  show('s-project');
+}
+// ── the admin tool ───────────────────────────────────────────────────────────────────────────
+// Every action here is an `admin.<op>` API call, and the SERVER decides: this screen existing at
+// all is convenience. An operator who reaches one of these calls is refused there, the attempt is
+// counted like a wrong PIN and Andrew is told.
+var adminUsers = [], pinTarget = null;
+// Patch's precedence: a disabled user reads "Disabled" even when they are also locked out, because
+// there is nothing useful to add past "they cannot log in either way".
+function adminStatus(u) {
+  if (!u.active) return 'Disabled';
+  if (!u.has_pin) return 'No PIN yet';
+  if (u.locked) return 'Locked';
+  return 'Active';
+}
+function renderAdmin() {
+  $('admin-users').innerHTML = adminUsers.map(function (u, i) {
+    return '<li><div class="name">' + esc(u.name) + '</div>'
+      + '<div class="desc">' + esc(u.slack_user) + ' · ' + esc(adminStatus(u)) + '</div>'
+      + '<div class="row2">'
+      + '<button class="ghost" id="au' + i + '-pin">Set PIN</button>'
+      + '<button class="ghost" id="au' + i + '-act">'
+      + (u.active ? 'Disable access' : 'Enable access') + '</button>'
+      + '</div></li>';
+  }).join('');
+  // By id, not by querySelector: one handler per row, and the row it closes over is the row the
+  // list was drawn from.
+  adminUsers.forEach(function (u, i) {
+    $('au' + i + '-pin').onclick = function () { openSetPin(u); };
+    $('au' + i + '-act').onclick = function () { setActive(u); };
+  });
+}
+function adminCall(op, body, onOk) {
+  var payload = body || {};
+  payload.op = op;
+  return api('admin.' + op, payload).then(function (r) {
+    if (!r || r.error) return adminFailed(r || {});
+    if (r.users) { adminUsers = r.users; renderAdmin(); }
+    if (onOk) onOk(r);
+  }).catch(function () { say('admin-msg', "I couldn't reach the system. Try again.", 'bad'); });
+}
+function adminFailed(r) {
+  var e = String(r.error || '');
+  say('admin-msg',
+    e === 'forbidden' ? "You don't have access to this."
+    : e === 'self' ? "You can't disable your own access."
+    : e === 'duplicate' ? 'That Slack ID is already in the list — ' + String(r.target || '') + ' has it.'
+    : e === 'bad slack id' ? "That doesn't look like a Slack ID. It should start with a U, like U2V2C3KQ9."
+    : "I couldn't do that one. Try again.", 'bad');
+}
+function openAdmin() {
+  say('admin-msg', '');
+  $('admin-pin-form').hidden = true;
+  $('admin-add-form').hidden = true;
+  band('Admin');
+  show('s-admin');
+  adminCall('list', {});
+}
+function openSetPin(u) {
+  pinTarget = u;
+  say('admin-msg', '');
+  $('admin-pin-who').textContent = 'Set a PIN for ' + u.name;
+  $('admin-pin1').value = '';
+  $('admin-pin2').value = '';
+  $('admin-add-form').hidden = true;
+  $('admin-pin-form').hidden = false;
+}
+function setActive(u) {
+  // Disabling is the only destructive admin action, so it is the only one that asks first.
+  // "They" rather than "he": this line is a template over every user in the table.
+  if (u.active && !confirm('Disable ' + u.name + "'s access? They won't be able to log in until "
+      + 'you turn it back on.')) return;
+  adminCall('setActive', { slack_user: u.slack_user, active: !u.active }, function () {
+    say('admin-msg', u.name + (u.active ? "'s access is off." : "'s access is back on."));
+  });
+}
+once('admin-pin-go', function (free) {
+  var a = $('admin-pin1').value.trim(), b = $('admin-pin2').value.trim();
+  if (!/^\d{4,6}$/.test(a)) { say('admin-msg', '4 to 6 digits, numbers only.', 'bad'); free(); return; }
+  if (a !== b) { say('admin-msg', "Those two PINs don't match. Try again.", 'bad'); free(); return; }
+  var who = pinTarget || {};
+  // Hashed HERE, with the same salt and the same sha256 the login uses, so the clear PIN never
+  // leaves this phone -- not for the admin's own PIN and not for anyone else's.
+  adminCall('setPin', { slack_user: who.slack_user, pin_h1: sha256(PIN_SALT + ':' + a) },
+    function () {
+      $('admin-pin-form').hidden = true;
+      $('admin-pin1').value = ''; $('admin-pin2').value = '';
+      say('admin-msg', "I've set " + String(who.name || '') + "'s PIN.");
+    }).then(free, free);
+});
+$('admin-pin-cancel').onclick = function () {
+  $('admin-pin-form').hidden = true;
+  $('admin-pin1').value = ''; $('admin-pin2').value = '';
+  say('admin-msg', '');
+};
+$('admin-add').onclick = function () {
+  say('admin-msg', '');
+  $('admin-pin-form').hidden = true;
+  $('admin-name').value = ''; $('admin-slack').value = '';
+  $('admin-add-form').hidden = false;
+};
+$('admin-add-cancel').onclick = function () { $('admin-add-form').hidden = true; };
+once('admin-add-go', function (free) {
+  var name = $('admin-name').value.trim(), slack = $('admin-slack').value.trim();
+  if (!name) { say('admin-msg', 'Add a full name.', 'bad'); free(); return; }
+  adminCall('addUser', { name: name, slack_user: slack }, function () {
+    $('admin-add-form').hidden = true;
+    say('admin-msg', "I've added " + name + '. Set their PIN to finish.');
+  }).then(free, free);
+});
+
+// Going Home drops the batch exactly as "New batch" does, and the camera with it. It is offered
+// only from Project and from a FINISHED Result, so there is never a batch in flight to drop.
+function goHome() {
+  stopCamera();
+  onLost();
+  state.project = null;
+  state.lines = [];
+  state.batch = null;
+  state.busy = false;
+  $('undo').style.display = 'none';
+  $('result-home').style.display = 'none';
+  render();
+  band();
+  home();
+  show('s-home');
+}
 
 // ── sha256 ───────────────────────────────────────────────────────────────────────────────────
 // Byte-identical to tools/build/app/ap/_sha.js, which is what AP Login hashes with; the suite
@@ -206,9 +577,8 @@ function api(action, body) {
     });
 }
 function signOut() {
-  try { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(NAME_KEY); } catch (e) {}
-  state.token = null; state.name = null;
-  $('hdr').textContent = 'Added Parts';
+  state.token = null; state.name = null; state.role = '';
+  band();
   show('s-pin');
 }
 
@@ -241,31 +611,98 @@ once('pin-go', function (free) {
     free();
     if (r.locked) { say('pin-msg', 'Too many tries — locked for 10 minutes. Try again after that.', 'bad'); return; }
     if (!r.ok) { say('pin-msg', "That PIN isn't recognized. Try again.", 'bad'); $('pin').value = ''; return; }
-    state.token = r.token; state.name = r.name;
-    try { localStorage.setItem(TOKEN_KEY, r.token); localStorage.setItem(NAME_KEY, r.name); } catch (e) {}
-    $('hdr').textContent = 'Added Parts — ' + r.name;
+    state.token = r.token; state.name = r.name; state.role = r.role || 'operator';
     $('pin').value = '';
-    show('s-project');
+    // The Admin card exists only for an admin, so the list is rebuilt once the role is known.
+    renderTools();
+    // The portal's front door, not a tool: a PIN opens every tool in it (§10), so the operator
+    // chooses from Home rather than being dropped into Added Parts.
+    band();
+    home();
+    show('s-home');
   }).catch(function () { free(); say('pin-msg', "I couldn't reach the system. Try again.", 'bad'); });
 });
 
-// ── 2. Project ──
+// ── 2. Project or ticket ──
+// The service department works off tickets, and a ticket's parts all land on one Jetbuilt project
+// (P-3324) in a room named after the ticket's client. "P-3161" and "3713-9256" / "ticket 9256" /
+// "T9256" / "#9256" say which they are; a BARE 4-digit number does not -- P-3268 and ticket 9268
+// can both exist -- so the page ASKS instead of guessing. The server re-derives the same shapes,
+// so a request that names its kind and one that shows it in the text cannot disagree.
+function kindOf(text) {
+  var t = String(text || '').trim();
+  if (/^3713-\d{1,6}$/.test(t) || /ticket|^t\s*\d|^#/i.test(t)) return 'ticket';
+  if (/p/i.test(t)) return 'project';
+  return /^\d{4}$/.test(t) ? '' : 'project';
+}
+function plabel() {
+  var p = state.project || {};
+  return p.label || (p.number ? 'P-' + p.number : 'this batch');
+}
+function lookUp(kind) {
+  return function (free) {
+    var num = $('proj').value.trim();
+    if (!num) { free(); return; }
+    $('which').hidden = true;
+    say('proj-msg', '');
+    api('project', { number: num, kind: kind }).then(function (r) {
+      free();
+      if (r.notFound) {
+        say('proj-msg', kind === 'ticket'
+          ? "I can't find that ticket. Check the number and try again."
+          : "I can't find that project. Check the number and try again.", 'bad');
+        return;
+      }
+      if (r.noClient) {
+        // The room IS the client name for a ticket batch, so a ticket nothing resolves a name for
+        // is refused rather than filed somewhere nobody looks.
+        say('proj-msg', 'I found ticket #' + r.number
+          + ", but I can't tell whose job it is. Check with dispatch, then try again.", 'bad');
+        return;
+      }
+      if (r.locked) {
+        // P-3324 being locked blocks EVERY ticket, not just this one, so it reads differently
+        // from an ordinary project whose current version a PM has closed.
+        say('proj-msg', kind === 'ticket'
+          ? 'Ticket parts are locked right now. Check with your supervisor before scanning any tickets.'
+          : 'P-' + r.number + "'s current version is locked. Check with PM before scanning.", 'bad');
+        return;
+      }
+      state.project = r;
+      state.lines = [];
+      render();
+      // §7c splits these two apart: the BAND says where you are in the portal and is the same on
+      // all four Added Parts screens, while the on-page header says what THIS screen is. Before
+      // the portal the band carried both and Review never got a header of its own at all.
+      // plabel() rather than r.label: one place decides how a batch is named, and an older
+      // reply that carries only the number still reads as "P-3268" instead of "undefined".
+      band(PORTAL.segment);
+      $('scan-hdr').textContent = 'Scan — ' + plabel() + ', ' + r.client;
+      show('s-scan');
+      startCamera();
+    }).catch(function () { free(); say('proj-msg', "I couldn't reach the system. Try again.", 'bad'); });
+  };
+}
+var goProject = lookUp('project');
+var goTicket = lookUp('ticket');
 once('proj-go', function (free) {
-  var num = $('proj').value.trim();
-  if (!num) { free(); return; }
-  say('proj-msg', '');
-  api('project', { number: num }).then(function (r) {
+  var typed = $('proj').value.trim();
+  var kind = kindOf(typed);
+  if (!kind) {
+    // Ambiguous. Ask, show the two buttons, and give Continue back -- the operator may want to
+    // retype it with a prefix instead of answering.
+    $('which-ask').textContent = 'Is ' + typed + ' a project number or a ticket number?';
+    $('which').hidden = false;
     free();
-    if (r.notFound) { say('proj-msg', "I can't find that project. Check the number and try again.", 'bad'); return; }
-    if (r.locked) { say('proj-msg', 'P-' + r.number + "'s current version is locked. Check with PM before scanning.", 'bad'); return; }
-    state.project = r;
-    state.lines = [];
-    render();
-    $('hdr').textContent = 'Scan — P-' + r.number + ', ' + r.client;
-    show('s-scan');
-    startCamera();
-  }).catch(function () { free(); say('proj-msg', "I couldn't reach the system. Try again.", 'bad'); });
+    return;
+  }
+  (kind === 'ticket' ? goTicket : goProject)(free);
 });
+once('is-project', goProject);
+once('is-ticket', goTicket);
+$('proj-home').onclick = goHome;
+$('result-home').onclick = goHome;
+$('admin-home').onclick = goHome;
 
 // ── 3. Scan ──
 // PRESS TO CAPTURE (v2c). The first field run auto-added every code the camera decoded and then
@@ -511,6 +948,15 @@ function batchBody() {
   var p = state.project || {};
   return {
     project_id: p.project_id,
+    // v2f: `kind` decides a dated room or the client's own room, "P-3268" or "Ticket #9256" in
+    // every line anyone reads, and the Project Type on the board. `parts_label` is where the lines
+    // actually sit in Jetbuilt -- P-3324 for every ticket -- which is what Mounir is asked to
+    // allocate and assign against. All of it came from the same project reply project_id came
+    // from, and all of it is display only.
+    project_kind: p.kind,
+    project_label: p.label,
+    project_parts_label: p.parts_label,
+    project_location: p.location,
     project_number: p.number,
     project_client: p.client,
     project_name: p.name,
@@ -522,6 +968,8 @@ $('scan-done').onclick = function () {
   var body = batchBody();
   if (!body.lines.length) return;
   stopCamera();
+  $('review-hdr').textContent = 'Review — ' + plabel() + ', '
+    + String((state.project || {}).client || '');
   say('review-msg', '');
   $('review').innerHTML = '';
   $('room-line').textContent = 'Working it out…';
@@ -537,7 +985,11 @@ $('scan-done').onclick = function () {
     if (!r || !r.lines) return tallyFailed(null);
     $('confirm').disabled = false;
     state.room = r.room;
-    $('room-line').textContent = 'Going into room: ' + r.room;
+    // A ticket batch's room is the client's name, so the project it is going into has to be said
+    // out loud: "Going into P-3324, room: Dixon" (Patch).
+    $('room-line').textContent = r.room_in
+      ? 'Going into ' + r.room_in + ', room: ' + r.room
+      : 'Going into room: ' + r.room;
     var ul = $('review');
     ul.innerHTML = '';
     r.lines.forEach(function (l) {
@@ -580,7 +1032,7 @@ $('confirm').onclick = function () {
     state.batch = r.batch_id;
     $('result').innerHTML = '';
     say('result-msg', '');
-    $('progress').textContent = 'Adding to P-' + state.project.number + '…';
+    $('progress').textContent = 'Adding to ' + plabel() + '…';
     $('undo').style.display = '';
     show('s-result');
     poll();
@@ -599,7 +1051,7 @@ function poll() {
   api('status', { batch_id: state.batch }).then(function (r) {
     if (!r) return setTimeout(poll, 2000);
     if (r.state === 'running' || !r.state) {
-      $('progress').textContent = 'Adding to P-' + state.project.number + '… '
+      $('progress').textContent = 'Adding to ' + plabel() + '… '
         + (r.done || 0) + ' of ' + (r.total || 0) + ' done.';
       return setTimeout(poll, 2000);
     }
@@ -621,8 +1073,14 @@ function poll() {
       ul.appendChild(li);
     });
     say('result-msg', r.slack_ok === false
-      ? 'Added to P-' + state.project.number + ". I couldn't post the summary to the inventory channel — check it yourself if you want this logged there."
+      ? 'Added to ' + plabel() + ". I couldn't post the summary to the inventory channel — check it yourself if you want this logged there."
       : 'Posted to the inventory channel.');
+    // The batch is NOT finished when the stock has moved: allocate and assign are human steps in
+    // Jetbuilt that only Mounir can take. The server composes this line, because which of the
+    // three variants applies depends on whether the board row and the DM landed.
+    say('todo-msg', r.todo || '', r.todo && /couldn/.test(r.todo) ? 'warn' : '');
+    // The batch is finished, so leaving it is safe to offer.
+    $('result-home').style.display = '';
     // Patch: the undo button quietly expires, with no message.
     state.undoUntil = Date.now() + 2 * 60 * 60 * 1000;
     setTimeout(function () { $('undo').style.display = 'none'; }, 2 * 60 * 60 * 1000);
@@ -633,21 +1091,33 @@ $('again').onclick = function () {
   state.lines = []; state.batch = null;
   onLost();
   $('undo').style.display = 'none';
+  $('result-home').style.display = 'none';
   render();
   show('s-scan');
   startCamera();
 };
 $('undo').onclick = function () {
   if (!state.batch || Date.now() > state.undoUntil) return;
-  if (!confirm('Undo this batch? The items come off P-' + state.project.number
+  if (!confirm('Undo this batch? The items come off ' + plabel()
       + ' and the stock goes back to the shelf.')) return;
   $('undo').disabled = true;
   api('undo', { batch_id: state.batch }).then(function (r) {
     $('undo').disabled = false;
-    if (!r || !r.ok) { say('result-msg', "I couldn't undo that one. Check P-" + state.project.number + ' by hand.', 'bad'); return; }
+    if (!r || !r.ok) {
+      // Once Mounir has allocated and assigned the parts the stock is not where this would put it
+      // back, so the undo is refused rather than attempted -- Jetbuilt has to be the one to
+      // reverse it from there.
+      say('result-msg', r && r.reason === 'assigned'
+        ? "This batch is already assigned in Jetbuilt, so I can't undo it. Undo it in Jetbuilt first."
+        : r && r.reason === 'undone' ? 'That batch is already undone.'
+        : "I couldn't undo that one. Check " + plabel() + ' by hand.', 'bad');
+      return;
+    }
     $('undo').style.display = 'none';
+    $('result-home').style.display = '';
     $('result').innerHTML = '';
-    $('progress').textContent = 'Undone — P-' + state.project.number
+    say('todo-msg', '');
+    $('progress').textContent = 'Undone — ' + plabel()
       + "'s items from this batch are zeroed out and the stock is back on the shelf.";
     // Jetbuilt silently drops `notes` on an item PATCH (exec 13145), so a zeroed item can still
     // read "Scanned in by ...". Say so rather than let someone find it in Jetbuilt and doubt the
@@ -659,15 +1129,16 @@ $('undo').onclick = function () {
   }).catch(function () { $('undo').disabled = false; });
 };
 
-// ── remembered device ──
-try {
-  var t = localStorage.getItem(TOKEN_KEY), n = localStorage.getItem(NAME_KEY);
-  if (t) {
-    state.token = t; state.name = n;
-    $('hdr').textContent = 'Added Parts — ' + (n || '');
-    show('s-project');
-  }
-} catch (e) {}
+// ── no remembered device ─────────────────────────────────────────────────────────────────────
+// Andrew, §10: "no matter what, the first thing that is displayed when the webpage is loaded is
+// the login screen." So there is no auto-login, and nothing to auto-login WITH: the token is not
+// written to the device at all any more. It lives in `state` for the session and carries the API
+// calls; a reload means a PIN. That also takes a working credential off a phone that may be put
+// down in a warehouse, which is the better end of the trade either way.
+// The band is composed from one place on every screen, including the first one, so the markup's
+// text above is only what shows before the script runs.
+band();
+renderTools();
 // The seam the suite drives: sighting a code and losing it are what tick() does with a decoded
 // frame, and faking a canvas + jsQR to reach them would test the fake, not the gate.
 window.__ap = { codeFrom: codeFrom, parseLabel: parseLabel, state: state,
