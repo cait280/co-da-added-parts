@@ -138,6 +138,15 @@ li{padding:14px 16px;margin-bottom:12px}
 .formhdr{margin:0 0 14px;font:500 15px/1.35 var(--head);letter-spacing:.01em;color:var(--text)}
 /* the two per-user controls sit side by side and stay a 44px target */
 #admin-users .row2 button{margin-top:12px;padding:13px 8px;font-size:11px;letter-spacing:.12em}
+/* The search results are tool cards: one full-width button per person, which already greys its
+   name and handle together when disabled -- which is exactly what an already-added row is. */
+#admin-find-results li{padding:0;overflow:hidden}
+#admin-find-results{margin:12px 0 0}
+/* The fallback is a link in a sentence, not a pill. */
+button.linky{display:inline;margin:0;padding:0;border:0;background:none;color:var(--body);
+  font:inherit;text-transform:none;letter-spacing:normal;text-decoration:underline;min-height:0}
+#admin-chosen{display:flex;align-items:center;gap:12px;margin-top:12px}
+#admin-chosen .name{flex:1;min-width:0}
 /* ── Home: one card per tool, the whole card is the tap target ── */
 #tools li{padding:0;overflow:hidden}
 button.tool{display:block;width:100%;margin:0;padding:20px 18px;text-align:left;
@@ -241,8 +250,23 @@ button.tool[disabled] .name,button.tool[disabled] .desc{opacity:.45}
     <div class="card" id="admin-add-form" hidden>
       <label for="admin-name">Full name</label>
       <input id="admin-name" type="text" autocomplete="off" placeholder="e.g. Mounir Wissa">
-      <label for="admin-slack">Slack ID</label>
-      <input id="admin-slack" type="text" autocomplete="off" placeholder="e.g. U2V2C3KQ9">
+      <label for="admin-find">Find them in Slack</label>
+      <input id="admin-find" type="text" autocomplete="off" placeholder="Type a name…">
+      <!-- The picked id. A hidden INPUT rather than only a JS variable, so the one thing the
+           submit reads is the one thing the pick writes. -->
+      <input id="admin-picked" type="hidden">
+      <ul id="admin-find-results"></ul>
+      <div id="admin-chosen" hidden></div>
+      <p class="hint" id="admin-find-note"></p>
+      <!-- One line, so Patch's sentence reads as a sentence: the trouble on the left and the way
+           round it as the link on the right. The link's words live HERE and nowhere else -- it is
+           also the standing fallback when nothing has gone wrong. -->
+      <p class="hint"><span id="admin-find-msg"></span><button id="admin-slack-link"
+        class="ghost linky">Enter a Slack ID instead</button></p>
+      <div id="admin-slack-row" hidden>
+        <label for="admin-slack">Slack ID</label>
+        <input id="admin-slack" type="text" autocomplete="off" placeholder="e.g. U2V2C3KQ9">
+      </div>
       <button id="admin-add-go">Add user</button>
       <button id="admin-add-cancel" class="ghost">Cancel</button>
     </div>
@@ -485,13 +509,127 @@ $('admin-add').onclick = function () {
   say('admin-msg', '');
   $('admin-pin-form').hidden = true;
   $('admin-name').value = ''; $('admin-slack').value = '';
+  // Every part of the search resets too, or the form reopens holding the last person Chris
+  // looked at and a hidden id that is no longer the one on the screen.
+  $('admin-find').value = '';
+  $('admin-slack-row').hidden = true;
+  $('admin-slack-link').hidden = false;
+  findClear();
   $('admin-add-form').hidden = false;
 };
 $('admin-add-cancel').onclick = function () { $('admin-add-form').hidden = true; };
+
+// ── finding someone in Slack, so nobody hunts down an id (v2k, §11) ──────────────────────────
+// Chris types a name; the server searches the workspace and answers with up to eight people. The
+// id is never typed and never shown: it goes into a hidden field when a row is tapped, and the
+// name field is filled from the same row. Typing an id by hand is still there, one link away,
+// because a search that cannot answer must not be the end of the road.
+var findSeq = 0, findTimer = null;
+function findClear() {
+  $('admin-find-results').innerHTML = '';
+  $('admin-chosen').hidden = true;
+  $('admin-chosen').innerHTML = '';
+  $('admin-picked').value = '';
+  $('admin-find-note').textContent = '';
+  $('admin-find-msg').textContent = '';
+}
+function renderFind(people) {
+  $('admin-chosen').hidden = true;
+  // A tool card per person: the whole row is the control, which is what a tap wants, and an
+  // already-added row is the SAME row disabled -- so it is still visible and still says who it
+  // is, it just cannot be picked. Hiding it would send Chris hunting for an id that is in the
+  // list two inches above.
+  $('admin-find-results').innerHTML = people.map(function (p, i) {
+    return '<li><button class="tool" id="fu' + i + '"' + (p.exists ? ' disabled' : '')
+      + '><span class="name">' + esc(p.name) + '</span><span class="desc">'
+      + (p.exists ? 'Already added' : '@' + esc(p.handle)) + '</span></button></li>';
+  }).join('');
+  // By id and over the same array the list was drawn from, like renderAdmin: one handler per row,
+  // closing over that row.
+  people.forEach(function (p, i) {
+    if (p.exists) return;
+    $('fu' + i).onclick = function () { pickPerson(p); };
+  });
+}
+function pickPerson(p) {
+  $('admin-picked').value = p.slack_user;
+  $('admin-name').value = p.name;
+  $('admin-find-results').innerHTML = '';
+  $('admin-find-note').textContent = '';
+  $('admin-find-msg').textContent = '';
+  $('admin-chosen').innerHTML = '<span class="name" id="admin-chosen-who"></span>'
+    + '<button class="ghost" id="admin-chosen-change">Change</button>';
+  $('admin-chosen-who').textContent = p.name + ' · @' + p.handle;
+  $('admin-chosen').hidden = false;
+  $('admin-chosen-change').onclick = function () { findClear(); };
+}
+function findSlackFailed() {
+  $('admin-find-results').innerHTML = '';
+  $('admin-find-note').textContent = '';
+  // The rest of the sentence is the standing link, which is already sitting next to this.
+  $('admin-find-msg').textContent = "I can't search Slack right now. ";
+}
+function runFind(q) {
+  // What was typed may have moved on while the pause was running -- most often because Chris
+  // deleted back below two letters, which must leave NO list on the screen. clearTimeout covers
+  // this in a browser; this covers the timer that had already fired when the key came up.
+  if ($('admin-find').value.trim() !== q) return;
+  var seq = ++findSeq;
+  api('admin.findUser', { op: 'findUser', q: q }).then(function (r) {
+    // A keystroke supersedes the one before it: an answer that arrives out of order is DROPPED
+    // rather than painting a stale list over a newer one.
+    if (seq !== findSeq) return;
+    if (!r || r.error) {
+      if (String((r || {}).error) === 'forbidden') { adminFailed(r || {}); return; }
+      findSlackFailed();
+      return;
+    }
+    if (r.short) { $('admin-find-results').innerHTML = ''; $('admin-chosen').hidden = true;
+      $('admin-find-note').textContent = 'Keep typing — at least 2 letters.'; return; }
+    var people = r.people || [];
+    $('admin-find-msg').textContent = '';
+    renderFind(people);
+    // Three different notes under the rows, because three different things have happened and
+    // only one of them means "they are not in Slack" (Patch, §11 v2k rulings):
+    //   more      -- there are more than eight; the ninth is not on the screen and must be said
+    //   truncated -- we could not read the whole directory, so "nobody matches" would be a lie
+    //   neither   -- nobody matches, which is the answer
+    $('admin-find-note').textContent = people.length
+      ? (r.more ? 'Showing the first 8 — keep typing to narrow it down.' : '')
+      : (r.truncated
+        ? "I didn't find them in what I've checked of Slack — try the Slack ID if you have it."
+        : 'No one in Slack matches that.');
+  }).catch(function () { if (seq === findSeq) findSlackFailed(); });
+}
+$('admin-find').oninput = function () {
+  var q = $('admin-find').value.trim();
+  if (findTimer) clearTimeout(findTimer);
+  if (q.length < 2) {
+    // Nothing is sent, and any answer still in flight is dropped -- otherwise deleting back to
+    // one letter leaves the last list of eight sitting there as if it still matched.
+    findSeq++;
+    $('admin-find-results').innerHTML = '';
+    $('admin-find-msg').textContent = '';
+    $('admin-find-note').textContent = q.length ? 'Keep typing — at least 2 letters.' : '';
+    return;
+  }
+  // One request per PAUSE, not per keystroke. "Mounir" is six keystrokes and would be six
+  // users.list calls on a cold cache; the server caches for ten minutes and this covers the
+  // first burst, before there is anything to cache.
+  findTimer = setTimeout(function () { runFind(q); }, 250);
+};
+$('admin-slack-link').onclick = function () {
+  $('admin-slack-row').hidden = false;
+  $('admin-slack-link').hidden = true;
+};
 once('admin-add-go', function (free) {
-  var name = $('admin-name').value.trim(), slack = $('admin-slack').value.trim();
+  var name = $('admin-name').value.trim();
+  var picked = $('admin-picked').value.trim();
+  // The PICK wins where there is one; the typed id is the fallback. `picked` is what the audit
+  // row records, because "entered by hand" is what a mistyped id looks like a month later.
+  var slack = picked || $('admin-slack').value.trim();
   if (!name) { say('admin-msg', 'Add a full name.', 'bad'); free(); return; }
-  adminCall('addUser', { name: name, slack_user: slack }, function () {
+  adminCall('addUser', { name: name, slack_user: slack, picked: picked !== '' }, function () {
     $('admin-add-form').hidden = true;
     say('admin-msg', "I've added " + name + '. Set their PIN to finish.');
   }).then(free, free);
