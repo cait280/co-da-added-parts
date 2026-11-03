@@ -89,6 +89,10 @@ button{font:600 13px/1 var(--head);text-transform:uppercase;letter-spacing:.18em
   min-height:52px}
 button[disabled]{opacity:.35}
 button.ghost{background:transparent;color:var(--ink)}
+/* The kind selector: two pills side by side, the selected one black and the other a ghost, so
+   the choice reads the same way as every other pair of buttons in the portal (§9). */
+.seg{display:flex;gap:10px}
+.seg button{margin-top:10px;padding:16px 10px;letter-spacing:.12em}
 /* Destructive, but never a red block: a ghost pill in the accent. */
 button.danger{background:transparent;color:var(--copper);border-color:rgba(155,95,66,.45)}
 :focus-visible{outline:2px solid var(--copper);outline-offset:2px}
@@ -182,14 +186,14 @@ button.tool[disabled] .name,button.tool[disabled] .desc{opacity:.45}
   <section id="s-project" class="screen">
     <h2 class="hdr2">Which project or ticket?</h2>
     <div class="card">
-      <label for="proj">Project or ticket number</label>
-      <input id="proj" type="text" autocomplete="off" placeholder="Project or ticket number">
-      <button id="proj-go">Continue</button>
-      <div id="which" hidden>
-        <p class="hint" id="which-ask"></p>
-        <button id="is-project">Project</button>
-        <button id="is-ticket" class="ghost">Ticket</button>
+      <label id="kind-hdr">Project or ticket</label>
+      <div class="seg">
+        <button id="kind-ticket" class="ghost">Service ticket</button>
+        <button id="kind-project">Installation project</button>
       </div>
+      <label for="proj" id="proj-label">Project number</label>
+      <input id="proj" type="text" autocomplete="off" placeholder="Project number">
+      <button id="proj-go">Continue</button>
     </div>
     <div id="proj-msg"></div>
     <button id="proj-home" class="ghost">Home</button>
@@ -311,7 +315,7 @@ var TOOLS = [
 ];
 
 var state = { token: null, name: null, role: '', project: null, lines: [], batch: null,
-  room: null, undoUntil: 0, busy: false };
+  room: null, undoUntil: 0, busy: false, kind: 'project' };
 
 var $ = function (id) { return document.getElementById(id); };
 var show = function (id) {
@@ -378,7 +382,8 @@ function openTool(id) {
   state.lines = [];
   state.batch = null;
   $('proj').value = '';
-  $('which').hidden = true;
+  // The kind selector is NOT reset: it keeps what the tech chose last, which is the point of
+  // remembering it. Only the number and the message go.
   say('proj-msg', '');
   band(PORTAL.segment);
   show('s-project');
@@ -625,15 +630,38 @@ once('pin-go', function (free) {
 
 // ── 2. Project or ticket ──
 // The service department works off tickets, and a ticket's parts all land on one Jetbuilt project
-// (P-3324) in a room named after the ticket's client. "P-3161" and "3713-9256" / "ticket 9256" /
-// "T9256" / "#9256" say which they are; a BARE 4-digit number does not -- P-3268 and ticket 9268
-// can both exist -- so the page ASKS instead of guessing. The server re-derives the same shapes,
-// so a request that names its kind and one that shows it in the text cannot disagree.
+// (P-3324) in a room named after the ticket's client. Which kind this is comes from the SELECTOR
+// the tech sets before typing (§7b.1, v2j): a bare number is no longer ambiguous because nobody
+// has to guess at it, and the request always says which kind it is.
+// EXPLICIT shapes only (§7b.1, v2j, with Patch's correction). "3713-9256" / "ticket 9256" /
+// "T9256" / "#9256" say ticket and "P-3161" says project; anything else -- above all a bare
+// number, whatever its length -- returns '' and leaves the selector alone, because a bare number
+// is the exact case the selector exists for. v2f guessed here and asked the operator when it
+// could not; both are gone.
 function kindOf(text) {
   var t = String(text || '').trim();
   if (/^3713-\d{1,6}$/.test(t) || /ticket|^t\s*\d|^#/i.test(t)) return 'ticket';
   if (/p/i.test(t)) return 'project';
-  return /^\d{4}$/.test(t) ? '' : 'project';
+  return '';
+}
+// The selector is the answer to "which kind", so it owns the label, the placeholder and what the
+// request says. Remembered between batches: the same tech on the same phone is usually doing the
+// same kind of work all morning. localStorage throws on an opaque origin, so every touch of it
+// is wrapped -- the page still works, it just forgets (§2b).
+var KIND_KEY = 'ap.kind';
+function setKind(kind, remember) {
+  state.kind = kind === 'ticket' ? 'ticket' : 'project';
+  var t = state.kind === 'ticket';
+  $('kind-ticket').className = t ? '' : 'ghost';
+  $('kind-project').className = t ? 'ghost' : '';
+  var word = t ? 'Ticket number' : 'Project number';
+  $('proj-label').textContent = word;
+  $('proj').placeholder = word;
+  if (remember) { try { localStorage.setItem(KIND_KEY, state.kind); } catch (e) {} }
+}
+function rememberedKind() {
+  try { return localStorage.getItem(KIND_KEY) === 'ticket' ? 'ticket' : 'project'; }
+  catch (e) { return 'project'; }
 }
 function plabel() {
   var p = state.project || {};
@@ -643,7 +671,6 @@ function lookUp(kind) {
   return function (free) {
     var num = $('proj').value.trim();
     if (!num) { free(); return; }
-    $('which').hidden = true;
     say('proj-msg', '');
     api('project', { number: num, kind: kind }).then(function (r) {
       free();
@@ -685,21 +712,22 @@ function lookUp(kind) {
 }
 var goProject = lookUp('project');
 var goTicket = lookUp('ticket');
+// Tapping a pill is the tech's own choice, so it is remembered. Typing an explicit shape moves
+// the control for this lookup but is NOT remembered -- the pills say what the next batch starts
+// as, and one pasted "3713-9256" should not change that.
+$('kind-ticket').onclick = function () { setKind('ticket', true); };
+$('kind-project').onclick = function () { setKind('project', true); };
+$('proj').oninput = function () {
+  var k = kindOf($('proj').value);
+  if (k) setKind(k, false);
+};
 once('proj-go', function (free) {
-  var typed = $('proj').value.trim();
-  var kind = kindOf(typed);
-  if (!kind) {
-    // Ambiguous. Ask, show the two buttons, and give Continue back -- the operator may want to
-    // retype it with a prefix instead of answering.
-    $('which-ask').textContent = 'Is ' + typed + ' a project number or a ticket number?';
-    $('which').hidden = false;
-    free();
-    return;
-  }
-  (kind === 'ticket' ? goTicket : goProject)(free);
+  var explicit = kindOf($('proj').value);
+  if (explicit) setKind(explicit, false);
+  // Either way the request SAYS which kind it is, and the server re-derives the same shapes from
+  // the text, so a request that names its kind and one that shows it cannot disagree.
+  (state.kind === 'ticket' ? goTicket : goProject)(free);
 });
-once('is-project', goProject);
-once('is-ticket', goTicket);
 $('proj-home').onclick = goHome;
 $('result-home').onclick = goHome;
 $('admin-home').onclick = goHome;
@@ -954,6 +982,10 @@ function batchBody() {
     // allocate and assign against. All of it came from the same project reply project_id came
     // from, and all of it is display only.
     project_kind: p.kind,
+    // §7b.10: a ticket batch's note goes onto this conversation. The page is the only thing that
+    // has it at confirm time -- the lookup that found it ran in a different execution -- so it
+    // travels with the label and the client, display-only values the write path never keys on.
+    pv_conversation_id: p.pv_conversation_id || '',
     project_label: p.label,
     project_parts_label: p.parts_label,
     project_location: p.location,
@@ -997,7 +1029,7 @@ $('scan-done').onclick = function () {
       var h = '<div class="name">' + esc(l.product_name) + '</div>';
       if (l.short_description) h += '<div class="desc">' + esc(l.short_description) + '</div>';
       h += '<div class="meta">qty ' + l.qty + ' · shelf has ' + l.on_hand
-        + (l.ext_cost == null ? '' : ' · cost $' + Number(l.ext_cost).toFixed(2)) + '</div>';
+        + '</div>';
       h += '<div class="meta">' + esc(l.from_label || 'the shelf') + ' → ' + esc(r.destination) + '</div>';
       if (l.short > 0) {
         h += '<div class="flag">⚠️ stock short by ' + l.short + ' — the project gets all '
@@ -1072,9 +1104,18 @@ function poll() {
       li.innerHTML = h;
       ul.appendChild(li);
     });
-    say('result-msg', r.slack_ok === false
+    // Two independent writes, each with its own sentence (§7b.9, §7b.10.3). pv_note_ok is NULL
+    // when no ticket note was attempted -- a project batch, or the note still switched off --
+    // and null says nothing at all rather than reading as a failure. When both failed, the
+    // second sentence drops the "Added to ..." opener so the line does not say it twice.
+    var told = [r.slack_ok === false
       ? 'Added to ' + plabel() + ". I couldn't post the summary to the inventory channel — check it yourself if you want this logged there."
-      : 'Posted to the inventory channel.');
+      : 'Posted to the inventory channel.'];
+    if (r.pv_note_ok === false) {
+      told.push((r.slack_ok === false ? 'I also' : 'Added to ' + plabel() + ". I")
+        + " couldn't add this to the ticket's notes in ProVision — check it yourself if you want this logged there.");
+    }
+    say('result-msg', told.join(' '));
     // The batch is NOT finished when the stock has moved: allocate and assign are human steps in
     // Jetbuilt that only Mounir can take. The server composes this line, because which of the
     // three variants applies depends on whether the board row and the DM landed.
@@ -1122,10 +1163,24 @@ $('undo').onclick = function () {
     // Jetbuilt silently drops `notes` on an item PATCH (exec 13145), so a zeroed item can still
     // read "Scanned in by ...". Say so rather than let someone find it in Jetbuilt and doubt the
     // undo. The line disappears on its own if Jetbuilt starts honouring the field.
-    say('result-msg', r.note_kept
-      ? 'Jetbuilt kept the original note on those items, so they still read as scanned in — '
-        + 'the quantities are correct.'
-      : '');
+    var saidUndo = [];
+    if (r.slack_ok === false) {
+      saidUndo.push("Undone. I couldn't post this to the inventory channel — check it yourself "
+        + 'if you want this logged there.');
+    }
+    if (r.pv_note_ok === false) {
+      saidUndo.push("Undone. I couldn't add this to the ticket's notes in ProVision — check it "
+        + 'yourself if you want this logged there.');
+    }
+    // Jetbuilt silently drops `notes` on an item PATCH (exec 13145), so a zeroed item can still
+    // read "Scanned in by ...". Say so rather than let someone find it in Jetbuilt and doubt the
+    // undo. It says nothing about whether the undo worked -- that was v2ia's live defect -- and
+    // the line disappears on its own if Jetbuilt starts honouring the field.
+    if (r.note_kept) {
+      saidUndo.push('Jetbuilt kept the original note on those items, so they still read as '
+        + 'scanned in — the quantities are correct.');
+    }
+    say('result-msg', saidUndo.join(' '));
   }).catch(function () { $('undo').disabled = false; });
 };
 
@@ -1139,6 +1194,7 @@ $('undo').onclick = function () {
 // text above is only what shows before the script runs.
 band();
 renderTools();
+setKind(rememberedKind(), false);
 // The seam the suite drives: sighting a code and losing it are what tick() does with a decoded
 // frame, and faking a canvas + jsQR to reach them would test the fake, not the gate.
 window.__ap = { codeFrom: codeFrom, parseLabel: parseLabel, state: state,
