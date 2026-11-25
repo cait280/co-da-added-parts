@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CO-DA Team App">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0A0909">
+<title>CO-DA Team App</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Open+Sans:wght@400;600&display=swap">
+<style>
+:root{
+  --ink:#0A0909;
+  --paper:#F7F7F7;
+  --card:#FFFFFF;
+  --line:#E5E5E5;
+  --line-dark:rgba(255,255,255,.2);
+  --text:#0A0909;
+  --body:#6D6D6D;
+  --mute:#989898;
+  --soft:#CCCCCC;
+  --copper:#9B5F42;
+  --bad:#A3342B;
+  --ok:#39C07C;
+  --head:'Montserrat',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+  --sans:'Open Sans',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden;background:var(--paper);
+  color:var(--text);font:400 16px/1.5 var(--sans);letter-spacing:.28px;
+  -webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+header{position:sticky;top:0;z-index:5;background:var(--ink);
+  padding:calc(27px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 14px
+          calc(16px + env(safe-area-inset-left));
+  border-bottom:1px solid var(--line-dark);display:flex;align-items:center;gap:8px 14px;
+  flex-wrap:wrap}
+.wordmark{height:22px;width:auto;flex:none;
+  font:600 17px/22px var(--head);text-transform:uppercase;letter-spacing:.18em;color:#fff}
+h1{margin:0 0 0 auto;min-width:0;font:500 11px/1.4 var(--head);text-transform:uppercase;
+  letter-spacing:.2em;color:#fff;text-align:right;white-space:normal}
+.seg{white-space:nowrap}
+.seg{overflow-wrap:break-word}
+main{padding:22px calc(16px + env(safe-area-inset-right))
+     calc(120px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+  max-width:620px;margin:0 auto}
+.screen{display:none}.screen.on{display:block}
+.card,li,.msg{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 8px 24px rgba(0,0,0,.06)}
+.card{padding:20px 16px}
+.msg{margin:14px 0;padding:14px 16px;font-size:15px;color:var(--text);box-shadow:none}
+.msg.bad{border-left:2px solid var(--bad);color:var(--bad)}
+.msg.warn{border-left:2px solid var(--copper)}
+#todo-msg .msg{border-left:2px solid var(--copper)}
+label{display:block;font:500 11px/1.4 var(--head);text-transform:uppercase;letter-spacing:.22em;
+  color:var(--body);margin:0 0 10px}
+input{width:100%;padding:15px 16px;font:400 17px/1.3 var(--sans);background:var(--card);
+  color:var(--text);border:1px solid var(--line);border-radius:12px}
+#pin{text-align:center;letter-spacing:.5em;font-size:22px}
+@font-face{font-family:PinDisc;src:url(data:font/ttf;base64,AAEAAAAKAIAAAwAgT1MvMl++WvAAAACsAAAAYGNtYXAAXwGcAAABDAAAAOhnbHlmbW18QQAAAfQAAAA8aGVhZC7oqLYAAAIwAAAANmhoZWEFpwCaAAACaAAAACRobXR4Au4ARgAAAowAAAAIbG9jYQAAADwAAAKUAAAADG1heHAABAASAAACoAAAACBuYW1lAugK+wAAAsAAAAA6cG9zdP+4ADIAAAL8AAAAIAAEAXcBkAAFAAACigJYAAAASwKKAlgAAAFeADIBLAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAABOT05FAEAAIQB+BC3+2wAABC0BJQAAAAEAAAAAAhgCygAAACAAAQAAAAEAAwABAAAADAAEANwAAAAEAAQAAQAAAH7//wAAACH//wAAAAEABAAAAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQBGAPIBMgHeAA8AAAEUBwYjIicmNTQ3NjMyFxYBMiMiMTEiIyMiMTEiIwFoMSIjIyIxMSIjIyIAAAAAAQAAAAEAAJY/eUNfDzz1AAsD6AAAAADnKTKAAAAAAOcpMoAARgDyATIB3gAAAAgAAgABAAAAAAABAAAELf7bAAABdwBGAEUBMgABAAAAAAAAAAAAAAAAAAAAAgF3AAABdwBGAAAAAAAAAAAAAAA8AAEAAAACABAAAQAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAACAB4AAwABBAkAAQAOAAAAAwABBAkAAgAOAA4AUABpAG4ARABpAHMAYwBSAGUAZwB1AGwAYQByAAAAAwAAAAAAAP+1ADIAAAAAAAAAAAAAAAAAAAAAAAAAAA==) format('truetype');font-display:block}
+#pin{font-family:PinDisc,var(--sans)}
+#pin::placeholder{font-family:var(--sans)}
+#pin.pin-mask-css{-webkit-text-security:disc}
+::placeholder{color:var(--soft)}
+button{font:600 13px/1 var(--head);text-transform:uppercase;letter-spacing:.18em;border:1px solid var(--ink);
+  border-radius:999px;padding:18px;background:var(--ink);color:#fff;width:100%;margin-top:14px;
+  min-height:52px}
+button[disabled]{opacity:.35}
+button.ghost{background:transparent;color:var(--ink)}
+.seg{display:flex;gap:10px}
+.seg button{margin-top:10px;padding:16px 10px;letter-spacing:.12em}
+button.danger{background:transparent;color:var(--copper);border-color:rgba(155,95,66,.45)}
+:focus-visible{outline:2px solid var(--copper);outline-offset:2px}
+input:focus{outline:2px solid var(--copper);outline-offset:-1px}
+.viewfinder{position:relative;border-radius:16px;background:var(--ink);overflow:visible}
+#view{width:100%;border-radius:16px;background:#000;aspect-ratio:4/3;object-fit:cover;display:block}
+#view.seen{box-shadow:0 0 0 3px var(--ok)}
+.sight{position:absolute;left:0;right:0;bottom:0;margin:0;padding:12px 14px;
+  font:500 12px/1.3 var(--head);text-transform:uppercase;letter-spacing:.2em;text-align:center;
+  color:#fff;background:rgba(10,9,9,.72);border-radius:0 0 16px 16px;
+  -webkit-backdrop-filter:saturate(140%) blur(2px);backdrop-filter:saturate(140%) blur(2px)}
+.sight:empty{display:none}
+#capture{font-size:14px;padding:19px}
+.hint{color:var(--body);font-size:13px;text-align:center;margin:12px 0 0}
+.diag{color:var(--mute);font-size:13px;margin:8px 0 0;word-break:break-word}
+ul{list-style:none;margin:18px 0 0;padding:0}
+li{padding:14px 16px;margin-bottom:12px}
+.name{font:500 15px/1.35 var(--head);letter-spacing:.01em;color:var(--text)}
+.desc{color:var(--body);font-size:13px;margin-top:3px}
+.meta{color:var(--body);font-size:13px;margin-top:8px}
+.flag{color:var(--copper);font-size:13px;margin-top:8px}
+.unk{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.qty{display:flex;align-items:center;gap:10px;margin-top:14px}
+.qty button{width:44px;height:44px;min-height:44px;flex:none;margin:0;padding:0;font-size:19px;
+  letter-spacing:0;background:transparent;border:1px solid var(--line);color:var(--text);
+  border-radius:50%}
+.qty input{width:74px;text-align:center;padding:11px;font-size:16px}
+.qty .rm{margin-left:auto;color:var(--copper);border-color:rgba(155,95,66,.35)}
+.hdr2{margin:0 0 16px;font:500 19px/1.3 var(--head);letter-spacing:.01em;color:var(--text)}
+.hdr2:empty{display:none}
+.hi{margin:-8px 0 18px;font:400 15px/1.4 var(--sans);color:var(--body)}
+.hi:empty{display:none}
+.formhdr{margin:0 0 14px;font:500 15px/1.35 var(--head);letter-spacing:.01em;color:var(--text)}
+#admin-users .row2 button{margin-top:12px;padding:13px 8px;font-size:11px;letter-spacing:.12em}
+#admin-find-results li{padding:0;overflow:hidden}
+#admin-find-results{margin:12px 0 0}
+button.linky{display:inline;margin:0;padding:0;border:0;background:none;color:var(--body);
+  font:inherit;text-transform:none;letter-spacing:normal;text-decoration:underline;min-height:0}
+#admin-chosen{display:flex;align-items:center;gap:12px;margin-top:12px}
+#admin-chosen .name{flex:1;min-width:0}
+#tools li{padding:0;overflow:hidden}
+button.tool{display:block;width:100%;margin:0;padding:20px 18px;text-align:left;
+  background:var(--card);color:var(--text);border:0;border-radius:14px;min-height:88px;
+  text-transform:none;letter-spacing:normal;font:inherit}
+button.tool .name{display:block;font:500 17px/1.3 var(--head);text-transform:uppercase;
+  letter-spacing:.14em}
+button.tool .desc{display:block;color:var(--body);font:400 13px/1.5 var(--sans);margin-top:6px}
+button.tool[disabled]{opacity:1}
+button.tool[disabled] .name,button.tool[disabled] .desc{opacity:.45}
+.totals{color:var(--mute);margin-top:16px;font-size:12px;letter-spacing:.06em}
+.refusal{margin:14px 0;padding:14px 16px;border:1px solid var(--line);border-left:2px solid var(--copper);
+  border-radius:14px;background:var(--card);font-size:15px;color:var(--text)}
+.refusal p{margin:0 0 6px}.refusal button{margin-top:10px}
+.helper{color:var(--body);font-size:13px;margin:6px 0 0}
+.row2{display:flex;gap:10px}.row2 button{flex:1}
+#scan-leave-ask .row2 button{padding:16px 10px;letter-spacing:.12em}
+</style>
+</head>
+<body>
+<header>
+  <img class="wordmark" src="https://co-da.com/wp-content/uploads/2020/10/CO-DA-main_wht.png" alt="CO-DA" width="130" height="22">
+  <h1 id="hdr">CO-DA Team App</h1>
+</header>
+<main>
+
+  <section id="s-pin" class="screen on">
+    <h2 class="hdr2">CO-DA Team App</h2>
+    <div class="card">
+      <label for="pin">Enter your PIN</label>
+      <input id="pin" type="tel" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="••••">
+      <button id="pin-go">Continue</button>
+    </div>
+    <div id="pin-msg"></div>
+  </section>
+
+  <section id="s-home" class="screen">
+    <h2 class="hdr2">Home</h2>
+    <p class="hi" id="home-hi"></p>
+    <ul id="tools"></ul>
+    <div id="home-msg"></div>
+  </section>
+
+  <section id="s-project" class="screen">
+    <h2 class="hdr2">Which project or ticket?</h2>
+    <div class="card">
+      <label id="kind-hdr">Project or ticket</label>
+      <div class="seg">
+        <button id="kind-ticket" class="ghost">Service ticket</button>
+        <button id="kind-project">Installation project</button>
+      </div>
+      <label for="proj" id="proj-label">Project number</label>
+      <input id="proj" type="text" autocomplete="off" placeholder="Project number">
+      <button id="proj-go">Continue</button>
+    </div>
+    <div id="proj-msg"></div>
+    <button id="proj-home" class="ghost">Home</button>
+  </section>
+
+  <section id="s-scan" class="screen">
+    <h2 class="hdr2" id="scan-hdr"></h2>
+    <div class="viewfinder">
+      <video id="view" playsinline muted autoplay></video>
+      <p class="sight" id="sight"></p>
+    </div>
+    <button id="capture" disabled>Capture</button>
+    <p class="hint" id="scan-hint">Point the camera at a label.</p>
+    <div id="scan-msg"></div>
+    <ul id="lines"></ul>
+    <p class="totals" id="totals"></p>
+    <button id="scan-done" disabled>Scan at least one label</button>
+    <div id="scan-leave-ask" hidden>
+      <div class="msg" id="scan-leave-q"></div>
+      <div class="row2"><button id="scan-leave-yes" class="danger">Yes, leave</button>
+        <button id="scan-leave-no" class="ghost">Keep scanning</button></div>
+    </div>
+    <button id="scan-home" class="ghost">Home</button>
+  </section>
+
+  <section id="s-review" class="screen">
+    <h2 class="hdr2" id="review-hdr"></h2>
+    <div class="msg" id="room-line"></div>
+    <div id="review-msg"></div>
+    <ul id="review"></ul>
+    <button id="confirm">Confirm</button>
+    <button id="back" class="ghost">Back</button>
+  </section>
+
+  <section id="s-ec-project" class="screen">
+    <h2 class="hdr2">Which project?</h2>
+    <div class="card">
+      <label for="ec-proj">Project number</label>
+      <input id="ec-proj" type="text" autocomplete="off" placeholder="Project number">
+      <button id="ec-proj-go">Continue</button>
+    </div>
+    <div id="ec-proj-msg"></div>
+    <div id="ec-kind" hidden>
+      <div class="card">
+        <div class="name" id="ec-proj-label"></div>
+        <div class="desc" id="ec-proj-name"></div>
+      </div>
+      <label>What are you signing out?</label>
+      <button id="ec-job">Sign out to job</button>
+      <p class="helper">Gear leaves for the job site.</p>
+      <button id="ec-lab">Sign out to Lab</button>
+      <p class="helper">Gear goes to the Lab.</p>
+    </div>
+    <button id="ec-proj-home" class="ghost">Home</button>
+  </section>
+
+  <section id="s-ec-review" class="screen">
+    <h2 class="hdr2" id="ec-review-hdr"></h2>
+    <div id="ec-review-msg"></div>
+    <ul id="ec-review"></ul>
+    <p class="totals" id="ec-review-totals"></p>
+    <button id="ec-confirm">Confirm sign out to job</button>
+    <button id="ec-back" class="ghost">Back</button>
+  </section>
+
+  <section id="s-ec-result" class="screen">
+    <div class="msg" id="ec-progress"></div>
+    <ul id="ec-result"></ul>
+    <div id="ec-result-msg"></div>
+    <div id="ec-undo-ask" hidden>
+      <div class="msg" id="ec-undo-q"></div>
+      <div class="row2"><button id="ec-undo-yes" class="danger">Yes, undo</button>
+        <button id="ec-undo-no" class="ghost">Keep it</button></div>
+    </div>
+    <button id="ec-again">New sign out</button>
+    <button id="ec-undo" class="danger" style="display:none">Undo this sign out</button>
+    <p class="helper" id="ec-undo-help" style="display:none">You can undo this for 2 hours.</p>
+    <button id="ec-home" class="ghost" style="display:none">Home</button>
+  </section>
+
+  <section id="s-admin" class="screen">
+    <h2 class="hdr2">Admin</h2>
+    <div id="admin-msg"></div>
+    <ul id="admin-users"></ul>
+    <div class="card" id="admin-pin-form" hidden>
+      <p class="formhdr" id="admin-pin-who"></p>
+      <label for="admin-pin1">New PIN</label>
+      <input id="admin-pin1" type="tel" inputmode="numeric" maxlength="6" autocomplete="off">
+      <label for="admin-pin2">Confirm PIN</label>
+      <input id="admin-pin2" type="tel" inputmode="numeric" maxlength="6" autocomplete="off">
+      <p class="hint">4 to 6 digits, numbers only.</p>
+      <button id="admin-pin-go">Set PIN</button>
+      <button id="admin-pin-cancel" class="ghost">Cancel</button>
+    </div>
+    <button id="admin-add" class="ghost">Add user</button>
+    <div class="card" id="admin-add-form" hidden>
+      <label for="admin-name">Full name</label>
+      <input id="admin-name" type="text" autocomplete="off" placeholder="e.g. Alex Rivera">
+      <label for="admin-find">Find them in Slack</label>
+      <input id="admin-find" type="text" autocomplete="off" placeholder="Type a name…">
+      <input id="admin-picked" type="hidden">
+      <ul id="admin-find-results"></ul>
+      <div id="admin-chosen" hidden></div>
+      <p class="hint" id="admin-find-note"></p>
+      <p class="hint"><span id="admin-find-msg"></span><button id="admin-slack-link"
+        class="ghost linky">Enter a Slack ID instead</button></p>
+      <div id="admin-slack-row" hidden>
+        <label for="admin-slack">Slack ID</label>
+        <input id="admin-slack" type="text" autocomplete="off" placeholder="e.g. U0123ABCDE">
+      </div>
+      <button id="admin-add-go">Add user</button>
+      <button id="admin-add-cancel" class="ghost">Cancel</button>
+    </div>
+    <button id="admin-home" class="ghost">Home</button>
+  </section>
+
+  <section id="s-result" class="screen">
+    <div class="msg" id="progress"></div>
+    <ul id="result"></ul>
+    <div id="result-msg"></div>
+    <div id="todo-msg"></div>
+    <button id="again">New batch</button>
+    <button id="undo" class="danger">Undo this batch</button>
+    <button id="result-home" class="ghost" style="display:none">Home</button>
+  </section>
+
+</main>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script>
+'use strict';
+var API = 'https://co-da.app.n8n.cloud/webhook/added-parts-mrtjqxp76jy/api';
+var LABEL = 'https://jetbui.lt/i/';
+var LABEL_PAGE = 'https://app.jetbuilt.com/i/';
+var MARKER = 'This asset is being tracked within the Jetbuilt Project Platform';
+var PIN_SALT = 'co-da.added-parts';
+
+var PORTAL = {
+  band: 'CO-DA Team App',
+  segment: 'Added Parts',
+  hi: 'Hi ',
+  home: 'Home',
+};
+var TOOLS = [
+  { id: 'added-parts', name: 'Added Parts',
+    desc: 'Scan parts and add them to a project or a ticket.' },
+  { id: 'equipment-check-out', name: 'Equipment Check Out',
+    desc: 'Scan project gear and sign it out to a job or to the Lab.' },
+  { id: 'admin', name: 'Admin', admin: true,
+    desc: "Set PIN codes and turn anyone's access on or off." },
+];
+
+var state = { tool: 'ap', token: null, name: null, role: '', project: null, lines: [], batch: null,
+  room: null, undoUntil: 0, busy: false, kind: 'project' };
+
+var scanGen = 0;
+var tallyGen = 0;
+var homeQuietUntil = 0, HOME_QUIET_MS = 700;
+function homeQuiet() { homeQuietUntil = Date.now() + HOME_QUIET_MS; }
+var readMsgCode = null;
+var $ = function (id) { return document.getElementById(id); };
+var show = function (id) {
+  var all = document.querySelectorAll('.screen');
+  for (var i = 0; i < all.length; i++) all[i].classList.remove('on');
+  scanAsk(false);
+  $(id).classList.add('on');
+};
+var say = function (where, text, kind) {
+  if (where === 'scan-msg') readMsgCode = null;
+  $(where).innerHTML = text ? '<div class="msg ' + (kind || '') + '"></div>' : '';
+  if (text) $(where).firstChild.textContent = text;
+};
+var esc = function (s) { var d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; };
+var band = function (segment) {
+  var parts = [PORTAL.band, segment || '', state.name || ''].filter(Boolean);
+  var el = $('hdr');
+  el.textContent = parts.join(' — ');
+  if (parts.length > 1) {
+    el.innerHTML = parts.map(function (part, i) {
+      return '<span class="seg">' + esc(part) + (i < parts.length - 1 ? ' —' : '') + '</span>';
+    }).join(' ');
+  }
+};
+
+function home() {
+  var first = String(state.name || '').trim().split(/\s+/)[0] || '';
+  $('home-hi').textContent = first ? PORTAL.hi + first + '.' : '';
+}
+function renderTools() {
+  var shown = TOOLS.filter(function (t) { return !t.admin || state.role === 'admin'; });
+  $('tools').innerHTML = shown.map(function (t) {
+    return '<li><button class="tool" id="tool-' + t.id + '">'
+      + '<span class="name">' + esc(t.name) + '</span>'
+      + '<span class="desc">' + esc(t.desc) + '</span>'
+      + '</button></li>';
+  }).join('');
+  shown.forEach(function (t) {
+    $('tool-' + t.id).onclick = function () { openTool(t.id); };
+  });
+}
+function openTool(id) {
+  if (id === 'admin') return openAdmin();
+  if (id === 'equipment-check-out') return openEc();
+  if (id !== 'added-parts') return;
+  state.tool = 'ap';
+  state.project = null;
+  state.lines = [];
+  state.batch = null;
+  $('proj').value = '';
+  say('proj-msg', '');
+  band(PORTAL.segment);
+  show('s-project');
+}
+var adminUsers = [], pinTarget = null;
+function adminStatus(u) {
+  if (!u.active) return 'Disabled';
+  if (!u.has_pin) return 'No PIN yet';
+  if (u.locked) return 'Locked';
+  return 'Active';
+}
+function renderAdmin() {
+  $('admin-users').innerHTML = adminUsers.map(function (u, i) {
+    return '<li><div class="name">' + esc(u.name) + '</div>'
+      + '<div class="desc">' + esc(u.slack_user) + ' · ' + esc(adminStatus(u)) + '</div>'
+      + '<div class="row2">'
+      + '<button class="ghost" id="au' + i + '-pin">Set PIN</button>'
+      + '<button class="ghost" id="au' + i + '-act">'
+      + (u.active ? 'Disable access' : 'Enable access') + '</button>'
+      + '</div></li>';
+  }).join('');
+  adminUsers.forEach(function (u, i) {
+    $('au' + i + '-pin').onclick = function () { openSetPin(u); };
+    $('au' + i + '-act').onclick = function () { setActive(u); };
+  });
+}
+function adminCall(op, body, onOk) {
+  var payload = body || {};
+  payload.op = op;
+  return api('admin.' + op, payload).then(function (r) {
+    if (!r || r.error) return adminFailed(r || {});
+    if (r.users) { adminUsers = r.users; renderAdmin(); }
+    if (onOk) onOk(r);
+  }).catch(function () { say('admin-msg', "I couldn't reach the system. Try again.", 'bad'); });
+}
+function adminFailed(r) {
+  var e = String(r.error || '');
+  say('admin-msg',
+    e === 'forbidden' ? "You don't have access to this."
+    : e === 'self' ? "You can't disable your own access."
+    : e === 'duplicate' ? 'That Slack ID is already in the list — ' + String(r.target || '') + ' has it.'
+    : e === 'bad slack id' ? "That doesn't look like a Slack ID. It should start with a U, like U0123ABCDE."
+    : "I couldn't do that one. Try again.", 'bad');
+}
+function openAdmin() {
+  say('admin-msg', '');
+  $('admin-pin-form').hidden = true;
+  $('admin-add-form').hidden = true;
+  band('Admin');
+  show('s-admin');
+  adminCall('list', {});
+}
+function openSetPin(u) {
+  pinTarget = u;
+  say('admin-msg', '');
+  $('admin-pin-who').textContent = 'Set a PIN for ' + u.name;
+  $('admin-pin1').value = '';
+  $('admin-pin2').value = '';
+  $('admin-add-form').hidden = true;
+  $('admin-pin-form').hidden = false;
+}
+function setActive(u) {
+  if (u.active && !confirm('Disable ' + u.name + "'s access? They won't be able to log in until "
+      + 'you turn it back on.')) return;
+  adminCall('setActive', { slack_user: u.slack_user, active: !u.active }, function () {
+    say('admin-msg', u.name + (u.active ? "'s access is off." : "'s access is back on."));
+  });
+}
+once('admin-pin-go', function (free) {
+  var a = $('admin-pin1').value.trim(), b = $('admin-pin2').value.trim();
+  if (!/^\d{4,6}$/.test(a)) { say('admin-msg', '4 to 6 digits, numbers only.', 'bad'); free(); return; }
+  if (a !== b) { say('admin-msg', "Those two PINs don't match. Try again.", 'bad'); free(); return; }
+  var who = pinTarget || {};
+  adminCall('setPin', { slack_user: who.slack_user, pin_h1: sha256(PIN_SALT + ':' + a) },
+    function () {
+      $('admin-pin-form').hidden = true;
+      $('admin-pin1').value = ''; $('admin-pin2').value = '';
+      say('admin-msg', "I've set " + String(who.name || '') + "'s PIN.");
+    }).then(free, free);
+});
+$('admin-pin-cancel').onclick = function () {
+  $('admin-pin-form').hidden = true;
+  $('admin-pin1').value = ''; $('admin-pin2').value = '';
+  say('admin-msg', '');
+};
+$('admin-add').onclick = function () {
+  say('admin-msg', '');
+  $('admin-pin-form').hidden = true;
+  $('admin-name').value = ''; $('admin-slack').value = '';
+  $('admin-find').value = '';
+  $('admin-slack-row').hidden = true;
+  $('admin-slack-link').hidden = false;
+  findClear();
+  $('admin-add-form').hidden = false;
+};
+$('admin-add-cancel').onclick = function () { $('admin-add-form').hidden = true; };
+
+var findSeq = 0, findTimer = null;
+function findClear() {
+  $('admin-find-results').innerHTML = '';
+  $('admin-chosen').hidden = true;
+  $('admin-chosen').innerHTML = '';
+  $('admin-picked').value = '';
+  $('admin-find-note').textContent = '';
+  $('admin-find-msg').textContent = '';
+}
+function renderFind(people) {
+  $('admin-chosen').hidden = true;
+  $('admin-find-results').innerHTML = people.map(function (p, i) {
+    return '<li><button class="tool" id="fu' + i + '"' + (p.exists ? ' disabled' : '')
+      + '><span class="name">' + esc(p.name) + '</span><span class="desc">'
+      + (p.exists ? 'Already added' : '@' + esc(p.handle)) + '</span></button></li>';
+  }).join('');
+  people.forEach(function (p, i) {
+    if (p.exists) return;
+    $('fu' + i).onclick = function () { pickPerson(p); };
+  });
+}
+function pickPerson(p) {
+  $('admin-picked').value = p.slack_user;
+  $('admin-name').value = p.name;
+  $('admin-find-results').innerHTML = '';
+  $('admin-find-note').textContent = '';
+  $('admin-find-msg').textContent = '';
+  $('admin-chosen').innerHTML = '<span class="name" id="admin-chosen-who"></span>'
+    + '<button class="ghost" id="admin-chosen-change">Change</button>';
+  $('admin-chosen-who').textContent = p.name + ' · @' + p.handle;
+  $('admin-chosen').hidden = false;
+  $('admin-chosen-change').onclick = function () { findClear(); };
+}
+function findSlackFailed() {
+  $('admin-find-results').innerHTML = '';
+  $('admin-find-note').textContent = '';
+  $('admin-find-msg').textContent = "I can't search Slack right now. ";
+}
+function runFind(q) {
+  if ($('admin-find').value.trim() !== q) return;
+  var seq = ++findSeq;
+  api('admin.findUser', { op: 'findUser', q: q }).then(function (r) {
+    if (seq !== findSeq) return;
+    if (!r || r.error) {
+      if (String((r || {}).error) === 'forbidden') { adminFailed(r || {}); return; }
+      findSlackFailed();
+      return;
+    }
+    if (r.short) { $('admin-find-results').innerHTML = ''; $('admin-chosen').hidden = true;
+      $('admin-find-note').textContent = 'Keep typing — at least 2 letters.'; return; }
+    var people = r.people || [];
+    $('admin-find-msg').textContent = '';
+    renderFind(people);
+    $('admin-find-note').textContent = people.length
+      ? (r.more ? 'Showing the first 8 — keep typing to narrow it down.' : '')
+      : (r.truncated
+        ? "I didn't find them in what I've checked of Slack — try the Slack ID if you have it."
+        : 'No one in Slack matches that.');
+  }).catch(function () { if (seq === findSeq) findSlackFailed(); });
+}
+$('admin-find').oninput = function () {
+  var q = $('admin-find').value.trim();
+  if (findTimer) clearTimeout(findTimer);
+  if (q.length < 2) {
+    findSeq++;
+    $('admin-find-results').innerHTML = '';
+    $('admin-find-msg').textContent = '';
+    $('admin-find-note').textContent = q.length ? 'Keep typing — at least 2 letters.' : '';
+    return;
+  }
+  findTimer = setTimeout(function () { runFind(q); }, 250);
+};
+$('admin-slack-link').onclick = function () {
+  $('admin-slack-row').hidden = false;
+  $('admin-slack-link').hidden = true;
+};
+once('admin-add-go', function (free) {
+  var name = $('admin-name').value.trim();
+  var picked = $('admin-picked').value.trim();
+  var slack = picked || $('admin-slack').value.trim();
+  if (!name) { say('admin-msg', 'Add a full name.', 'bad'); free(); return; }
+  adminCall('addUser', { name: name, slack_user: slack, picked: picked !== '' }, function () {
+    $('admin-add-form').hidden = true;
+    say('admin-msg', "I've added " + name + '. Set their PIN to finish.');
+  }).then(free, free);
+});
+
+function goHome() {
+  stopCamera();
+  onLost();
+  retireBatch();
+  state.tool = 'ap';
+  ec.reset();
+  state.project = null;
+  state.lines = [];
+  state.batch = null;
+  say('scan-msg', '');
+  $('scan-hint').style.display = '';
+  $('undo').style.display = 'none';
+  $('result-home').style.display = 'none';
+  render();
+  band();
+  home();
+  show('s-home');
+}
+function retireBatch() {
+  scanGen++;
+  tallyGen++;
+  looking = {};
+  state.busy = false;
+  state.undoUntil = 0;
+  $('back').disabled = false;
+  $('undo').disabled = false;
+  $('ec-again').disabled = false;
+  $('ec-undo').disabled = false;
+  $('ec-undo-ask').hidden = true;
+}
+var SCAN_LEAVE_Q = {
+  ap: "Leave without adding these? What you've scanned will be cleared.",
+  ec: "Leave without signing these out? What you've scanned will be cleared.",
+};
+function scanAsk(on) {
+  $('scan-leave-ask').hidden = !on;
+  $('scan-home').style.display = on ? 'none' : '';
+}
+$('scan-home').onclick = function () {
+  if (Date.now() < homeQuietUntil) return;
+  if (!state.lines.length) return goHome();
+  $('scan-leave-q').textContent = SCAN_LEAVE_Q[state.tool === 'ec' ? 'ec' : 'ap'];
+  scanAsk(true);
+  var ask = $('scan-leave-ask');
+  if (ask.scrollIntoView) ask.scrollIntoView({ block: 'nearest' });
+};
+$('scan-leave-no').onclick = function () { scanAsk(false); };
+$('scan-leave-yes').onclick = function () { goHome(); };
+
+function sha256(ascii) {
+  function rr(n, x) { return (n >>> x) | (n << (32 - x)); }
+  const K = [];
+  const H = [1779033703, 3144134277, 1013904242, 2773480762, 1359893119, 2600822924, 528734635, 1541459225];
+  let p = 2, i, j;
+  for (i = 0; i < 64;) {
+    let isPrime = true;
+    for (let f = 2; f * f <= p; f++) if (p % f === 0) { isPrime = false; break; }
+    if (isPrime) { K[i] = (Math.pow(p, 1 / 3) % 1 * Math.pow(2, 32)) | 0; i++; }
+    p++;
+  }
+  const msg = unescape(encodeURIComponent(ascii));
+  const words = [];
+  const len = msg.length * 8;
+  for (i = 0; i < msg.length; i++) words[i >> 2] |= msg.charCodeAt(i) << ((3 - i % 4) * 8);
+  words[len >> 5] |= 0x80 << (24 - len % 32);
+  words[((len + 64 >> 9) << 4) + 15] = len;
+  const w = new Array(64);
+  for (i = 0; i < words.length; i += 16) {
+    const h = H.slice();
+    for (j = 0; j < 64; j++) {
+      if (j < 16) w[j] = words[i + j] | 0;
+      else {
+        const g0 = w[j - 15], g1 = w[j - 2];
+        const s0 = rr(g0, 7) ^ rr(g0, 18) ^ (g0 >>> 3);
+        const s1 = rr(g1, 17) ^ rr(g1, 19) ^ (g1 >>> 10);
+        w[j] = (w[j - 16] + s0 + w[j - 7] + s1) | 0;
+      }
+      const S1 = rr(h[4], 6) ^ rr(h[4], 11) ^ rr(h[4], 25);
+      const ch = (h[4] & h[5]) ^ (~h[4] & h[6]);
+      const t1 = (h[7] + S1 + ch + K[j] + w[j]) | 0;
+      const S0 = rr(h[0], 2) ^ rr(h[0], 13) ^ rr(h[0], 22);
+      const mj = (h[0] & h[1]) ^ (h[0] & h[2]) ^ (h[1] & h[2]);
+      const t2 = (S0 + mj) | 0;
+      h[7] = h[6]; h[6] = h[5]; h[5] = h[4]; h[4] = (h[3] + t1) | 0;
+      h[3] = h[2]; h[2] = h[1]; h[1] = h[0]; h[0] = (t1 + t2) | 0;
+    }
+    for (j = 0; j < 8; j++) H[j] = (H[j] + h[j]) | 0;
+  }
+  return H.map((x) => ('00000000' + (x >>> 0).toString(16)).slice(-8)).join('');
+}
+
+function api(action, body) {
+  var payload = body || {};
+  payload.action = action;
+  payload.token = state.token;
+  return fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload) })
+    .then(function (r) { return r.json().catch(function () { return { error: 'unreadable' }; }); })
+    .then(function (j) {
+      if (j && j.error === 'auth') { signOut(); throw new Error('auth'); }
+      return j;
+    });
+}
+function signOut() {
+  state.token = null; state.name = null; state.role = '';
+  retireBatch();
+  band();
+  show('s-pin');
+}
+
+function once(id, run) {
+  var el = $(id);
+  el.onclick = function () {
+    if (el.disabled) return;
+    el.disabled = true;
+    var free = function () { el.disabled = false; };
+    try { run(free); } catch (e) { free(); throw e; }
+  };
+}
+
+once('pin-go', function (free) {
+  var pin = $('pin').value.trim();
+  if (!/^\d{4,6}$/.test(pin)) {
+    say('pin-msg', "That PIN isn't recognized. Try again.", 'bad'); free(); return;
+  }
+  say('pin-msg', '');
+  api('login', { pin_h1: sha256(PIN_SALT + ':' + pin) }).then(function (r) {
+    free();
+    if (r.locked) { say('pin-msg', 'Too many tries — locked for 10 minutes. Try again after that.', 'bad'); return; }
+    if (!r.ok) { say('pin-msg', "That PIN isn't recognized. Try again.", 'bad'); $('pin').value = ''; return; }
+    state.token = r.token; state.name = r.name; state.role = r.role || 'operator';
+    $('pin').value = '';
+    renderTools();
+    band();
+    home();
+    show('s-home');
+  }).catch(function () { free(); say('pin-msg', "I couldn't reach the system. Try again.", 'bad'); });
+});
+
+(function () {
+  var fonts = document.fonts;
+  var fallBack = function () { $('pin').className = 'pin-mask-css'; };
+  if (!fonts || typeof fonts.load !== 'function') { fallBack(); return; }
+  fonts.load('22px PinDisc', '0').then(function (got) { if (!got || !got.length) fallBack(); }, fallBack);
+})();
+
+function kindOf(text) {
+  var t = String(text || '').trim();
+  if (/^3713-\d{1,6}$/.test(t) || /ticket|^t\s*\d|^#/i.test(t)) return 'ticket';
+  if (/p/i.test(t)) return 'project';
+  return '';
+}
+var KIND_KEY = 'ap.kind';
+function setKind(kind, remember) {
+  state.kind = kind === 'ticket' ? 'ticket' : 'project';
+  var t = state.kind === 'ticket';
+  $('kind-ticket').className = t ? '' : 'ghost';
+  $('kind-project').className = t ? 'ghost' : '';
+  var word = t ? 'Ticket number' : 'Project number';
+  $('proj-label').textContent = word;
+  $('proj').placeholder = word;
+  if (remember) { try { localStorage.setItem(KIND_KEY, state.kind); } catch (e) {} }
+}
+function rememberedKind() {
+  try { return localStorage.getItem(KIND_KEY) === 'ticket' ? 'ticket' : 'project'; }
+  catch (e) { return 'project'; }
+}
+function plabel() {
+  var p = state.project || {};
+  return p.label || (p.number ? 'P-' + p.number : 'this batch');
+}
+function lookUp(kind) {
+  return function (free) {
+    var num = $('proj').value.trim();
+    if (!num) { free(); return; }
+    say('proj-msg', '');
+    api('project', { number: num, kind: kind }).then(function (r) {
+      free();
+      if (r.notFound) {
+        say('proj-msg', kind === 'ticket'
+          ? "I can't find that ticket. Check the number and try again."
+          : "I can't find that project. Check the number and try again.", 'bad');
+        return;
+      }
+      if (r.noClient) {
+        say('proj-msg', 'I found ticket #' + r.number
+          + ", but I can't tell whose job it is. Check with dispatch, then try again.", 'bad');
+        return;
+      }
+      if (r.locked) {
+        say('proj-msg', kind === 'ticket'
+          ? 'Ticket parts are locked right now. Check with your supervisor before scanning any tickets.'
+          : 'P-' + r.number + "'s current version is locked. Check with PM before scanning.", 'bad');
+        return;
+      }
+      state.project = r;
+      state.lines = [];
+      render();
+      band(PORTAL.segment);
+      $('scan-hdr').textContent = 'Scan — ' + plabel() + ', ' + r.client;
+      show('s-scan');
+      startCamera();
+    }).catch(function () { free(); say('proj-msg', "I couldn't reach the system. Try again.", 'bad'); });
+  };
+}
+var goProject = lookUp('project');
+var goTicket = lookUp('ticket');
+$('kind-ticket').onclick = function () { setKind('ticket', true); };
+$('kind-project').onclick = function () { setKind('project', true); };
+$('proj').oninput = function () {
+  var k = kindOf($('proj').value);
+  if (k) setKind(k, false);
+};
+once('proj-go', function (free) {
+  var explicit = kindOf($('proj').value);
+  if (explicit) setKind(explicit, false);
+  (state.kind === 'ticket' ? goTicket : goProject)(free);
+});
+$('proj-home').onclick = goHome;
+$('result-home').onclick = goHome;
+$('admin-home').onclick = goHome;
+
+var stream = null, raf = 0;
+var sighting = null;
+var known = {}, looking = {};
+var misses = 0, MISS_FRAMES = 8;
+var camGen = 0;
+function startCamera() {
+  if (stream) return;
+  var g = camGen;
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(function (s) {
+      if (g !== camGen) { s.getTracks().forEach(function (t) { t.stop(); }); return; }
+      stream = s;
+      var v = $('view');
+      v.srcObject = s;
+      return v.play();
+    })
+    .then(function () { if (g === camGen) raf = requestAnimationFrame(tick); })
+    .catch(function (e) {
+      if (g !== camGen) return;
+      say('scan-msg', "I can't get to the camera. Allow camera access for this page, then reload.", 'bad');
+      var why = e && e.name ? e.name : 'unknown error';
+      if (!window.isSecureContext || location.origin === 'null') why += ' \u00b7 origin ' + location.origin;
+      var p = document.createElement('p');
+      p.className = 'diag';
+      p.textContent = why;
+      $('scan-msg').firstChild.appendChild(p);
+    });
+}
+function stopCamera() {
+  camGen++;
+  if (raf) cancelAnimationFrame(raf);
+  raf = 0;
+  if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
+}
+var canvas = document.createElement('canvas');
+function tick() {
+  var v = $('view');
+  if (v.readyState === v.HAVE_ENOUGH_DATA && typeof jsQR === 'function') {
+    canvas.width = v.videoWidth; canvas.height = v.videoHeight;
+    var ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+    var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var hit = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+    var code = hit && hit.data ? codeFrom(String(hit.data).trim()) : null;
+    if (code) { misses = 0; onSight(code); }
+    else if (sighting && ++misses > MISS_FRAMES) onLost();
+  }
+  raf = requestAnimationFrame(tick);
+}
+function codeFrom(text) {
+  var t = String(text), low = t.toLowerCase(), hosts = [LABEL, LABEL_PAGE];
+  for (var h = 0; h < hosts.length; h++) {
+    var i = low.indexOf(hosts[h]);
+    if (i === -1) continue;
+    var m = t.slice(i + hosts[h].length).match(/^([A-Za-z0-9_-]+)/);
+    return m ? m[1] : null;
+  }
+  return null;
+}
+function parseLabel(html) {
+  var text = String(html)
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, '\n').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
+  var lines = text.split('\n').map(function (l) { return l.replace(/\s+/g, ' ').trim(); })
+    .filter(function (l) { return l.length; });
+  var at = -1;
+  for (var i = 0; i < lines.length; i++) if (lines[i].indexOf(MARKER) !== -1) { at = i; break; }
+  if (at === -1) return null;
+  var rest = lines.slice(at + 1).filter(function (l) { return l.indexOf(MARKER) === -1; });
+  if (!rest.length) return null;
+  return { name: rest[0], desc: rest[1] && !/^Installation Date|^For service/i.test(rest[1]) ? rest[1] : '' };
+}
+function buzz() { try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {} }
+
+function onSight(code) {
+  if (sighting && sighting.code === code) return;
+  sighting = { code: code, captured: false };
+  paintSight();
+  look(code);
+  var k = known[code];
+  if (state.tool === 'ec' && k && k.company_product_id) ecLook(k.company_product_id, k.name);
+}
+function onLost() {
+  sighting = null;
+  misses = 0;
+  paintSight();
+}
+function paintSight() {
+  if (state.tool === 'ec') return ecPaintSight();
+  var cap = $('capture');
+  $('view').classList[sighting ? 'add' : 'remove']('seen');
+  if (!sighting) { $('sight').textContent = ''; cap.disabled = true; return; }
+  var k = known[sighting.code];
+  cap.disabled = sighting.captured;
+  $('sight').textContent = sighting.captured ? 'Captured. Move to the next label.'
+    : k ? (k.unknown ? "I don't recognize this one." : k.name)
+    : 'Label found';
+}
+$('capture').onclick = function () {
+  scanAsk(false);
+  if (state.tool === 'ec') return ecCapture();
+  if (!sighting || sighting.captured) return;
+  var code = sighting.code;
+  sighting.captured = true;
+  buzz();
+  $('scan-hint').style.display = 'none';
+  var row = findRow(code);
+  if (row) row.qty += 1;
+  else {
+    row = { code: code, qty: 1, name: 'Reading…', desc: '', pending: true };
+    if (known[code]) applyKnown(row, known[code]);
+    state.lines.push(row);
+  }
+  render();
+  paintSight();
+  look(code);
+};
+function look(code) {
+  if (looking[code]) return;
+  if (known[code] && !known[code].labelFailed) return;
+  if (known[code]) {
+    delete known[code];
+    if (sighting && sighting.code === code) paintSight();
+  }
+  looking[code] = true;
+  var g = scanGen;
+  fetch(LABEL_PAGE + code, { mode: 'cors', credentials: 'omit' })
+    .then(function (r) { return r.text(); })
+    .then(function (html) { return parseLabel(html); })
+    .catch(function () { return null; })
+    .then(function (label) {
+      if (g !== scanGen) return;
+      return api('resolve', { code: code, label_name: label ? label.name : '', label_desc: label ? label.desc : '' })
+        .then(function (r) { if (g === scanGen) learn(code, knownFrom(r, Boolean(label))); });
+    })
+    .catch(function () { if (g === scanGen) learn(code, knownFrom(null, true)); });
+}
+function knownFrom(r, labelRead) {
+  return (r && r.company_product_id)
+    ? { company_product_id: r.company_product_id, name: r.product_name,
+        desc: r.short_description || '' }
+    : { unknown: true, labelFailed: !labelRead };
+}
+function learn(code, k) {
+  looking[code] = false;
+  known[code] = k;
+  if (readMsgCode === code && !k.labelFailed) say('scan-msg', '');
+  if (state.tool === 'ec' && k.company_product_id) ecLook(k.company_product_id, k.name);
+  var row = findRow(code);
+  if (row) { applyKnown(row, k); render(); }
+  if (sighting && sighting.code === code) paintSight();
+}
+function applyKnown(row, k) {
+  row.pending = false;
+  if (k.unknown) {
+    row.unknown = true;
+    row.labelFailed = Boolean(k.labelFailed);
+    row.company_product_id = undefined;
+    row.name = k.labelFailed ? "Couldn't read that label — try scanning it again, or enter it below."
+      : "I don't recognize this one.";
+    row.desc = '';
+  } else {
+    row.unknown = false;
+    row.company_product_id = k.company_product_id;
+    row.name = k.name;
+    row.desc = k.desc;
+  }
+}
+function findRow(code) {
+  for (var i = 0; i < state.lines.length; i++) if (state.lines[i].code === code) return state.lines[i];
+  return null;
+}
+
+function render() {
+  if (!state.lines.length) scanAsk(false);
+  if (state.tool === 'ec') return ecRender();
+  var ul = $('lines');
+  ul.innerHTML = '';
+  var units = 0;
+  state.lines.forEach(function (row, idx) {
+    units += row.qty;
+    var li = document.createElement('li');
+    var html = '<div class="name">' + esc(row.name) + '</div>';
+    if (row.desc) html += '<div class="desc">' + esc(row.desc) + '</div>';
+    if (row.unknown) {
+      html += '<div class="unk">'
+        + '<label>Manufacturer</label><input class="mf" autocomplete="off">'
+        + '<label>Model</label><input class="md" autocomplete="off">'
+        + '<button class="use">Use this</button></div>';
+    }
+    html += '<div class="qty">'
+      + '<button class="minus" aria-label="one fewer">−</button>'
+      + '<input class="n" type="tel" inputmode="numeric" value="' + row.qty + '">'
+      + '<button class="plus" aria-label="one more">+</button>'
+      + '<button class="rm" aria-label="remove">✕</button></div>';
+    li.innerHTML = html;
+    li.querySelector('.minus').onclick = function () { row.qty = Math.max(1, row.qty - 1); render(); };
+    li.querySelector('.plus').onclick = function () { row.qty += 1; render(); };
+    li.querySelector('.n').onchange = function (e) {
+      var n = parseInt(e.target.value, 10);
+      row.qty = n > 0 ? n : 1;
+      render();
+    };
+    li.querySelector('.rm').onclick = function () { state.lines.splice(idx, 1); homeQuiet(); render(); };
+    if (row.unknown) {
+      li.querySelector('.use').onclick = function () {
+        var mf = li.querySelector('.mf').value.trim(), md = li.querySelector('.md').value.trim();
+        if (!mf || !md) return;
+        row.name = 'Looking up…'; row.unknown = false; row.pending = true; render();
+        var g = scanGen;
+        api('resolve', { code: row.code, label_name: mf + ' ' + md })
+          .then(function (r) { if (g === scanGen) learn(row.code, knownFrom(r, true)); })
+          .catch(function () { if (g === scanGen) learn(row.code, knownFrom(null, true)); });
+      };
+    }
+    ul.appendChild(li);
+  });
+  var usable = state.lines.filter(function (r) { return r.company_product_id; });
+  $('totals').textContent = state.lines.length
+    ? state.lines.length + (state.lines.length === 1 ? ' line, ' : ' lines, ') + units + (units === 1 ? ' unit' : ' units')
+    : '';
+  var go = $('scan-done');
+  go.disabled = !usable.length;
+  go.textContent = usable.length ? 'Done scanning' : 'Scan at least one label';
+}
+
+function batchBody() {
+  var p = state.project || {};
+  return {
+    project_id: p.project_id,
+    project_kind: p.kind,
+    pv_conversation_id: p.pv_conversation_id || '',
+    project_label: p.label,
+    project_parts_label: p.parts_label,
+    project_location: p.location,
+    project_number: p.number,
+    project_client: p.client,
+    project_name: p.name,
+    lines: state.lines.filter(function (r) { return r.company_product_id; })
+      .map(function (r) { return { code: r.code, qty: r.qty, company_product_id: r.company_product_id }; }),
+  };
+}
+$('scan-done').onclick = function () {
+  if (state.tool === 'ec') return ecReview();
+  var body = batchBody();
+  if (!body.lines.length) return;
+  stopCamera();
+  $('review-hdr').textContent = 'Review — ' + plabel() + ', '
+    + String((state.project || {}).client || '');
+  say('review-msg', '');
+  $('review').innerHTML = '';
+  $('room-line').textContent = 'Working it out…';
+  $('confirm').disabled = true;
+  $('back').disabled = false;
+  show('s-review');
+  var g = ++tallyGen;
+  api('tally', body).then(function (r) {
+    if (g !== tallyGen) return;
+    if (r && r.error) return tallyFailed(r.error);
+    if (!r || !r.lines) return tallyFailed(null);
+    $('confirm').disabled = false;
+    state.room = r.room;
+    $('room-line').textContent = r.room_in
+      ? 'Going into ' + r.room_in + ', room: ' + r.room
+      : 'Going into room: ' + r.room;
+    var ul = $('review');
+    ul.innerHTML = '';
+    r.lines.forEach(function (l) {
+      var li = document.createElement('li');
+      var h = '<div class="name">' + esc(l.product_name) + '</div>';
+      if (l.short_description) h += '<div class="desc">' + esc(l.short_description) + '</div>';
+      h += '<div class="meta">qty ' + l.qty + ' · shelf has ' + l.on_hand
+        + '</div>';
+      h += '<div class="meta">' + esc(l.from_label || 'the shelf') + ' → ' + esc(r.destination) + '</div>';
+      if (l.short > 0) {
+        h += '<div class="flag">⚠️ stock short by ' + l.short + ' — the project gets all '
+          + l.qty + ', the shelf moves ' + l.moved + ', reconcile the rest.</div>';
+      }
+      li.innerHTML = h;
+      ul.appendChild(li);
+    });
+  }).catch(function () { if (g === tallyGen) tallyFailed(null); });
+};
+function tallyFailed(text) {
+  state.room = null;
+  $('review').innerHTML = '';
+  $('room-line').textContent = '';
+  $('confirm').disabled = true;
+  say('review-msg', text || "I couldn't work that out. Go back and try again.", 'bad');
+}
+$('back').onclick = function () { if ($('back').disabled) return; onLost(); show('s-scan'); startCamera(); };
+
+$('confirm').onclick = function () {
+  if (state.busy || $('confirm').disabled) return;
+  state.busy = true;
+  $('confirm').disabled = true;
+  $('back').disabled = true;
+  say('review-msg', '');
+  var g = scanGen;
+  api('confirm', batchBody()).then(function (r) {
+    if (g !== scanGen) return;
+    $('back').disabled = false;
+    if (r && r.error) return failSubmit(r.error);
+    if (!r || !r.batch_id) return failSubmit(null);
+    state.batch = r.batch_id;
+    $('result').innerHTML = '';
+    say('result-msg', '');
+    say('todo-msg', '');
+    $('progress').textContent = 'Adding to ' + plabel() + '…';
+    $('undo').style.display = '';
+    $('again').disabled = true;
+    show('s-result');
+    poll(g);
+  }).catch(function () { if (g === scanGen) failSubmit(null); });
+};
+function failSubmit(text) {
+  state.busy = false;
+  $('confirm').disabled = false;
+  $('back').disabled = false;
+  show('s-review');
+  say('review-msg', text
+    || "Something went wrong adding these — nothing's lost, your list is still here. Try Confirm again.", 'bad');
+}
+function poll(g) {
+  if (g !== scanGen) return;
+  var again = function () { poll(g); };
+  api('status', { batch_id: state.batch }).then(function (r) {
+    if (g !== scanGen) return;
+    if (!r) return setTimeout(again, 2000);
+    if (r.state === 'running' || !r.state) {
+      $('progress').textContent = 'Adding to ' + plabel() + '… '
+        + (r.done || 0) + ' of ' + (r.total || 0) + ' done.';
+      return setTimeout(again, 2000);
+    }
+    state.busy = false;
+    if (r.state === 'failed') return failSubmit(r.error || null);
+    $('progress').textContent = 'Added to room: ' + (r.room || state.room);
+    var ul = $('result');
+    ul.innerHTML = '';
+    (r.lines || []).forEach(function (l) {
+      var li = document.createElement('li');
+      var h = '<div class="name">' + esc(l.product_name) + ' — ' + l.moved + ' moved</div>'
+        + '<div class="meta">' + esc(l.from_label || 'the shelf') + ' → ' + esc(r.destination) + '</div>';
+      if (l.short > 0) {
+        h += '<div class="flag">⚠️ stock short by ' + l.short + ' — the project gets all '
+          + l.qty + ', the shelf moves ' + l.moved + ', reconcile the rest.</div>';
+      }
+      if (l.error) h += '<div class="flag">' + esc(l.error) + '</div>';
+      li.innerHTML = h;
+      ul.appendChild(li);
+    });
+    var told = [r.slack_ok === false
+      ? 'Added to ' + plabel() + ". I couldn't post the summary to the inventory channel — check it yourself if you want this logged there."
+      : 'Posted to the inventory channel.'];
+    if (r.pv_note_ok === false) {
+      told.push((r.slack_ok === false ? 'I also' : 'Added to ' + plabel() + ". I")
+        + " couldn't add this to the ticket's notes in ProVision — check it yourself if you want this logged there.");
+    }
+    say('result-msg', told.join(' '));
+    say('todo-msg', r.todo || '', r.todo && /couldn/.test(r.todo) ? 'warn' : '');
+    $('result-home').style.display = '';
+    $('again').disabled = false;
+    state.undoUntil = Date.now() + 2 * 60 * 60 * 1000;
+    setTimeout(function () { if (g === scanGen) $('undo').style.display = 'none'; }, 2 * 60 * 60 * 1000);
+  }).catch(function () { if (g === scanGen) setTimeout(again, 2000); });
+}
+
+$('again').onclick = function () {
+  if ($('again').disabled) return;
+  retireBatch();
+  state.lines = []; state.batch = null;
+  onLost();
+  $('undo').style.display = 'none';
+  $('result-home').style.display = 'none';
+  say('todo-msg', '');
+  render();
+  show('s-scan');
+  startCamera();
+};
+$('undo').onclick = function () {
+  if (!state.batch || Date.now() > state.undoUntil) return;
+  if (!confirm('Undo this batch? The items come off ' + plabel()
+      + ' and the stock goes back to the shelf.')) return;
+  $('undo').disabled = true;
+  var g = scanGen;
+  api('undo', { batch_id: state.batch }).then(function (r) {
+    if (g !== scanGen) return;
+    $('undo').disabled = false;
+    if (!r || !r.ok) {
+      say('result-msg', r && r.reason === 'assigned'
+        ? "This batch is already assigned in Jetbuilt, so I can't undo it. Undo it in Jetbuilt first."
+        : r && r.reason === 'undone' ? 'That batch is already undone.'
+        : "I couldn't undo that one. Check " + plabel() + ' by hand.', 'bad');
+      return;
+    }
+    $('undo').style.display = 'none';
+    $('result-home').style.display = '';
+    $('result').innerHTML = '';
+    say('todo-msg', '');
+    $('progress').textContent = 'Undone — ' + plabel()
+      + "'s items from this batch are zeroed out and the stock is back on the shelf.";
+    var saidUndo = [];
+    if (r.slack_ok === false) {
+      saidUndo.push("Undone. I couldn't post this to the inventory channel — check it yourself "
+        + 'if you want this logged there.');
+    }
+    if (r.pv_note_ok === false) {
+      saidUndo.push("Undone. I couldn't add this to the ticket's notes in ProVision — check it "
+        + 'yourself if you want this logged there.');
+    }
+    if (r.note_kept) {
+      saidUndo.push('Jetbuilt kept the original note on those items, so they still read as '
+        + 'scanned in — the quantities are correct.');
+    }
+    say('result-msg', saidUndo.join(' '));
+  }).catch(function () { $('undo').disabled = false; });
+};
+
+var EC_API = 'https://co-da.app.n8n.cloud/webhook/equipment-check-out-r4w8nz/api';
+var EC_MANAGER = 'Check with the inventory manager.';
+function ecCeil(q) {
+  var n = Math.round((Number(q) || 0) * 10000) / 10000;
+  return n > 0 ? Math.ceil(n) : 0;
+}
+function ecAllowed(listQty, assignedQty) {
+  return Math.max(0, Math.min(ecCeil(listQty), Math.floor(Number(assignedQty) || 0)));
+}
+function ecQtyText(q) {
+  var n = Math.round((Number(q) || 0) * 10000) / 10000;
+  return String(n);
+}
+function ecRefusal(code, lead, name, rest, lines) {
+  return { code: code, lead: lead, name: name, rest: rest, lines: lines };
+}
+function ecRefusalText(r) {
+  return [String(r.lead || '') + String(r.name || '') + String(r.rest || '')]
+    .concat(r.lines || []).join('\n');
+}
+function ecAssignRefusal(name, P, otherLabel, anyAssigned) {
+  if (otherLabel) {
+    return ecRefusal(1, '', name, ' is assigned to ' + otherLabel + '.',
+      ["I can't sign it out for " + P + '.', EC_MANAGER]);
+  }
+  if (anyAssigned) {
+    return ecRefusal(2, '', name, ' is assigned to a different project.',
+      ["I can't sign it out for " + P + '.', EC_MANAGER]);
+  }
+  return ecRefusal(3, '', name, " isn't assigned to any project.",
+    ["I can't sign it out for " + P + '.', EC_MANAGER]);
+}
+function ecListRefusal(name, P) {
+  return ecRefusal(4, '', name, " isn't on " + P + "'s equipment list.",
+    ["I can't sign it out.",
+      'If the job needs it as an extra part, use Added Parts. Otherwise check with the inventory manager.']);
+}
+function ecOverRefusal(name, P, kind, listQty, assignedQty, job, lab) {
+  var cap = ecCeil(listQty);
+  var assigned = Math.floor(Number(assignedQty) || 0);
+  var allowed = ecAllowed(listQty, assignedQty);
+  var tail = ["I can't add another.", EC_MANAGER];
+  if (assigned < cap) {
+    if (allowed === 1) {
+      return ecRefusal(5, 'Only 1 of the ' + ecQtyText(listQty) + ' ', name,
+        ' is assigned to ' + P + ' in Jetbuilt, and it is signed out.', tail);
+    }
+    return ecRefusal(5, 'Only ' + allowed + ' of the ' + ecQtyText(listQty) + ' ', name,
+      ' are assigned to ' + P + ' in Jetbuilt, and ' + (allowed === 2 ? 'both are' : 'all ' + allowed + ' are')
+      + ' signed out.', tail);
+  }
+  var j = Math.max(0, Number(job) || 0), l = Math.max(0, Number(lab) || 0);
+  if (allowed === 1) {
+    var one = l > 0 && j === 0 ? ', to the Lab.' : (j > 0 && l === 0 && kind === 'lab' ? ', to the job.' : '.');
+    return ecRefusal(5, '', name, ' is already signed out for ' + P + one, tail);
+  }
+  var where = (j > 0 && l > 0) ? ': ' + j + ' to the job, ' + l + ' to the Lab.'
+    : (l > 0 ? ', to the Lab.' : '.');
+  return ecRefusal(5, 'All ' + allowed + ' of ', name, ' are already signed out for ' + P + where, tail);
+}
+function ecFits(listQty, assignedQty, signedJob, signedLab, batchUnits, more) {
+  var used = (Number(signedJob) || 0) + (Number(signedLab) || 0) + (Number(batchUnits) || 0);
+  return used + (more === undefined ? 1 : more) <= ecAllowed(listQty, assignedQty);
+}
+function ecUnknownRefusal() {
+  return ecRefusal(6, "I don't recognize this label.", '', '',
+    ["Try scanning it again. If it still won't read, check with the inventory manager."]);
+}
+function ecUnreachableRefusal(P) {
+  return ecRefusal(8, "I can't check that label against " + P + ' right now. Try again in a minute.',
+    '', '', []);
+}
+function ecRefusedLead(P) {
+  return 'Nothing was recorded, and your list is still here. I\'ve marked the lines that no longer fit '
+    + P + '. Lower or remove them, then confirm again.';
+}
+function ecConfirmMarker(x, P) {
+  var name = String(x.item || ''), n = Math.max(0, Number(x.left) || 0), allowed = Number(x.allowed) || 0;
+  var counts = x.job !== undefined && x.job !== null && x.lab !== undefined && x.lab !== null;
+  var j = Number(x.job) || 0, l = Number(x.lab) || 0;
+  if (n > 0) {
+    if (x.cap === 'assigned') {
+      return ecRefusal('over', 'Only ' + n + ' more of ', name, (n === 1 ? ' is' : ' are') + ' assigned to ' + P
+        + ' in Jetbuilt. Lower it to ' + n + ' or remove it.', []);
+    }
+    return ecRefusal('over', 'Only ' + n + ' more of ', name, ' can be signed out for ' + P + '. Lower it to ' + n
+      + ' or remove it.', []);
+  }
+  if (x.cap === 'assigned') {
+    var who = allowed === 1 ? 'the 1 assigned to ' + P + ' in Jetbuilt is'
+      : (allowed === 2 ? 'both' : 'all ' + allowed) + ' assigned to ' + P + ' in Jetbuilt are';
+    return ecRefusal('over', 'None left of ', name, ': ' + who + ' signed out. Remove this line.', []);
+  }
+  if (!counts || !allowed) return ecRefusal('over', 'None left of ', name, ' for ' + P + '. Remove this line.', []);
+  if (allowed === 1) {
+    var where1 = l > 0 && j === 0 ? ', to the Lab.' : (j > 0 && l === 0 ? ', to the job.' : '.');
+    return ecRefusal('over', 'None left of ', name, ': it is already signed out for ' + P + where1 + ' Remove this line.', []);
+  }
+  var where = j > 0 && l > 0 ? ', ' + j + ' to the job, ' + l + ' to the Lab.' : (l > 0 && j === 0 ? ', to the Lab.' : '.');
+  return ecRefusal('over', 'None left of ', name, ': all ' + allowed + ' are already signed out for ' + P + where
+    + ' Remove this line.', []);
+}
+var ec = {
+  project: null,
+  kind: '',
+  list: {},
+  facts: {},
+  checking: {},
+  batch: null, undoUntil: 0, refusals: {},
+  reset: function () { ec.project = null; ec.kind = ''; ec.list = {}; ec.facts = {}; ec.checking = {};
+    ec.batch = null; ec.undoUntil = 0; ec.refusals = {}; },
+};
+function ecApi(action, body) {
+  var payload = body || {};
+  payload.action = action;
+  payload.token = state.token;
+  return fetch(EC_API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload) })
+    .then(function (r) { return r.json().catch(function () { return { error: 'unreadable' }; }); })
+    .then(function (j) {
+      if (j && j.error === 'auth') { signOut(); throw new Error('auth'); }
+      return j;
+    });
+}
+var ecP = function () { return ec.project ? ec.project.label : ''; };
+var ecWhere = function () { return ec.project ? ec.project.label + (ec.project.client ? ', ' + ec.project.client : '') : ''; };
+var ecKindText = function () { return ec.kind === 'lab' ? 'Sign out to Lab' : 'Sign out to job'; };
+function ecPlural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+function ecTotals(lines) {
+  var units = lines.reduce(function (t, r) { return t + r.qty; }, 0);
+  return lines.length ? ecPlural(lines.length, 'line', 'lines') + ', ' + ecPlural(units, 'unit', 'units') : '';
+}
+function ecRefusalHtml(r) {
+  var h = '<p>' + esc(r.lead || '') + (r.name ? '<b>' + esc(r.name) + '</b>' : '') + esc(r.rest || '') + '</p>';
+  (r.lines || []).forEach(function (l) { h += '<p>' + esc(l) + '</p>'; });
+  return h;
+}
+function ecShowRefusal(r) {
+  var box = $('scan-msg');
+  readMsgCode = null;
+  box.innerHTML = '<div class="refusal">' + ecRefusalHtml(r) + '<button id="ec-refusal-ok">OK</button></div>';
+  $('sight').textContent = '';
+  $('ec-refusal-ok').onclick = function () { box.innerHTML = ''; homeQuiet(); paintSight(); };
+}
+function openEc() {
+  state.tool = 'ec';
+  state.lines = [];
+  ec.reset();
+  $('ec-proj').value = '';
+  $('ec-kind').hidden = true;
+  say('ec-proj-msg', '');
+  band('Equipment Check Out');
+  show('s-ec-project');
+}
+$('ec-proj-home').onclick = function () { goHome(); };
+once('ec-proj-go', function (free) {
+  var number = $('ec-proj').value.trim();
+  if (!number) return free();
+  $('ec-kind').hidden = true;
+  say('ec-proj-msg', '');
+  var g = scanGen;
+  ecApi('ec.project', { number: number }).then(function (r) {
+    if (g !== scanGen) return;
+    if (r && r.ticket) return say('ec-proj-msg', "Tickets aren't set up for sign out yet. Enter a project number.", 'bad');
+    if (r && r.notFound) return say('ec-proj-msg', "I can't find that project. Check the number and try again.", 'bad');
+    if (r && r.noList) {
+      return say('ec-proj-msg', r.project.label + " has no equipment list yet, so there's nothing to sign out. Check with PM.", 'bad');
+    }
+    if (!r || !r.ok) return say('ec-proj-msg', "I can't reach Jetbuilt right now. Try again in a minute.", 'bad');
+    ec.project = r.project;
+    ec.list = {};
+    (r.lines || []).forEach(function (l) { ec.list[l.key] = l; });
+    ec.facts = {};
+    ec.checking = {};
+    $('ec-proj-label').innerHTML = '<b>' + esc(ecWhere()) + '</b>';
+    $('ec-proj-name').textContent = r.project.name || '';
+    $('ec-kind').hidden = false;
+  }).catch(function () { if (g === scanGen) say('ec-proj-msg', "I can't reach Jetbuilt right now. Try again in a minute.", 'bad'); })
+    .then(free, free);
+});
+function ecStartScan(kind) {
+  ec.kind = kind;
+  state.lines = [];
+  $('scan-hdr').textContent = 'Scan — ' + ecKindText() + ' — ' + ecWhere();
+  say('scan-msg', '');
+  $('scan-hint').style.display = '';
+  render();
+  show('s-scan');
+  startCamera();
+}
+$('ec-job').onclick = function () { ecStartScan('job'); };
+$('ec-lab').onclick = function () { ecStartScan('lab'); };
+function ecLook(cpid, name) {
+  if (ec.facts[cpid] || ec.checking[cpid] || !ec.project) return;
+  ec.checking[cpid] = true;
+  var g = scanGen;
+  ecApi('ec.check', { company_product_id: cpid, product_name: name, project_id: ec.project.project_id,
+    project_number: ec.project.number }).then(function (r) {
+    if (g !== scanGen) return;
+    ec.facts[cpid] = r && (r.ok || r.refusal) ? (r.ok ? r.facts : { refusal: r.refusal, facts: r.facts }) : { refusal: ecUnreachableRefusal(ecP()) };
+  }).catch(function () { if (g === scanGen) ec.facts[cpid] = { refusal: ecUnreachableRefusal(ecP()) }; })
+    .then(function () { if (g !== scanGen) return; ec.checking[cpid] = false; paintSight(); });
+}
+function ecBatchUnits(key) {
+  return state.lines.reduce(function (t, r) { return t + (r.key === key ? r.qty : 0); }, 0);
+}
+function ecOneMore(f) {
+  var l = ec.list[f.key] || { job: 0, lab: 0 };
+  var b = ecBatchUnits(f.key);
+  if (ecFits(f.qty, f.assigned, l.job, l.lab, b, 1)) return null;
+  return ecOverRefusal(f.item, ecP(), ec.kind, f.qty, f.assigned,
+    l.job + (ec.kind === 'job' ? b : 0), l.lab + (ec.kind === 'lab' ? b : 0));
+}
+function ecPaintSight() {
+  var cap = $('capture');
+  $('view').classList[sighting ? 'add' : 'remove']('seen');
+  if (!sighting) { $('sight').textContent = ''; cap.disabled = true; return; }
+  var k = known[sighting.code];
+  var f = k && k.company_product_id ? ec.facts[k.company_product_id] : null;
+  cap.disabled = sighting.captured || !k || (k.company_product_id && !f);
+  $('sight').textContent = sighting.captured ? 'Captured. Move to the next label.'
+    : !k ? 'Label found'
+    : k.unknown ? (k.labelFailed ? "Couldn't read that label — try scanning it again." : "I don't recognize this label.")
+    : k.name;
+}
+function ecCapture() {
+  if (!sighting || sighting.captured) return;
+  var k = known[sighting.code];
+  if (!k) return;
+  if (k.labelFailed) {
+    say('scan-msg', "Couldn't read that label — try scanning it again.", 'bad');
+    readMsgCode = sighting.code;
+    return look(sighting.code);
+  }
+  sighting.captured = true;
+  if (k.unknown) return ecShowRefusal(ecUnknownRefusal());
+  var f = ec.facts[k.company_product_id];
+  if (!f) { sighting.captured = false; return; }
+  if (f.refusal) return ecShowRefusal(f.refusal);
+  var over = ecOneMore(f);
+  if (over) return ecShowRefusal(over);
+  buzz();
+  $('scan-hint').style.display = 'none';
+  say('scan-msg', '');
+  var row = null;
+  for (var i = 0; i < state.lines.length; i++) if (state.lines[i].company_product_id === k.company_product_id) row = state.lines[i];
+  if (row) row.qty += 1;
+  else state.lines.push({ code: sighting.code, company_product_id: k.company_product_id, key: f.key,
+    name: f.item || k.name, desc: f.desc || k.desc || '', qty: 1 });
+  render();
+  paintSight();
+}
+function ecLeft(row) {
+  var f = ec.facts[row.company_product_id] || {};
+  var l = ec.list[row.key] || { job: 0, lab: 0 };
+  return ecAllowed(f.qty, f.assigned) - l.job - l.lab - ecBatchUnits(row.key);
+}
+function ecRender() {
+  var ul = $('lines');
+  ul.innerHTML = '';
+  state.lines.forEach(function (row, idx) {
+    var li = document.createElement('li');
+    var left = ecLeft(row);
+    var html = '<div class="name">' + esc(row.name) + '</div>';
+    if (row.desc) html += '<div class="desc">' + esc(row.desc) + '</div>';
+    html += '<div class="meta">Now ' + row.qty + ' · ' + (left > 0 ? left + ' left after this' : 'all signed out after this') + '</div>';
+    html += '<div class="qty">'
+      + '<button class="minus" aria-label="one fewer">−</button>'
+      + '<input class="n" type="tel" inputmode="numeric" value="' + row.qty + '">'
+      + '<button class="plus" aria-label="one more">+</button>'
+      + '<button class="rm" aria-label="remove">✕</button></div>';
+    li.innerHTML = html;
+    li.querySelector('.minus').onclick = function () { row.qty = Math.max(1, row.qty - 1); render(); };
+    li.querySelector('.plus').onclick = function () {
+      var over = ecOneMore(ec.facts[row.company_product_id] || {});
+      if (over) return ecShowRefusal(over);
+      row.qty += 1; render();
+    };
+    li.querySelector('.n').onchange = function (e) {
+      var n = parseInt(e.target.value, 10);
+      var room = row.qty + Math.max(0, ecLeft(row));
+      row.qty = n > 0 ? Math.min(n, room) : 1;
+      render();
+    };
+    li.querySelector('.rm').onclick = function () { state.lines.splice(idx, 1); homeQuiet(); render(); };
+    ul.appendChild(li);
+  });
+  $('totals').textContent = ecTotals(state.lines);
+  var go = $('scan-done');
+  go.disabled = !state.lines.length;
+  go.textContent = state.lines.length ? 'Done scanning' : 'Scan at least one label';
+}
+function ecReview() {
+  if (!state.lines.length) return;
+  stopCamera();
+  $('ec-review-hdr').textContent = 'Review — ' + ecKindText() + ' — ' + ecWhere();
+  $('ec-confirm').textContent = ec.kind === 'lab' ? 'Confirm sign out to Lab' : 'Confirm sign out to job';
+  $('ec-confirm').disabled = false;
+  say('ec-review-msg', '');
+  ecPaintReview();
+  show('s-ec-review');
+}
+function ecPaintReview() {
+  var ul = $('ec-review');
+  ul.innerHTML = '';
+  state.lines.forEach(function (row) {
+    var f = ec.facts[row.company_product_id] || {};
+    var l = ec.list[row.key] || { job: 0, lab: 0 };
+    var li = document.createElement('li');
+    var h = '<div class="name">' + esc(row.name) + '</div>';
+    if (row.desc) h += '<div class="desc">' + esc(row.desc) + '</div>';
+    h += '<div class="meta">' + (Number(f.qty) > 0 && Number(f.qty) < 1
+      ? 'Signing out ' + row.qty + ' · list has ' + ecQtyText(f.qty)
+      : 'Signing out ' + row.qty + ' of ' + ecAllowed(f.qty, f.assigned)) + '</div>';
+    if (l.job + l.lab > 0) h += '<div class="meta">' + (l.job + l.lab) + ' already signed out</div>';
+    var r = ec.refusals[row.company_product_id];
+    if (r) h += '<div class="flag">' + r + '</div>';
+    li.innerHTML = h;
+    ul.appendChild(li);
+  });
+  $('ec-review-totals').textContent = ecTotals(state.lines);
+}
+$('ec-back').onclick = function () { onLost(); show('s-scan'); startCamera(); };
+function ecBody() {
+  return { project_id: ec.project.project_id, project_number: ec.project.number, project_client: ec.project.client,
+    project_name: ec.project.name, kind: ec.kind,
+    lines: state.lines.map(function (r) { return { company_product_id: r.company_product_id, qty: r.qty }; }) };
+}
+var EC_RETRY_MS = 1500, EC_RETRY_FOR_MS = 15000;
+function ecConfirm(startedAt) {
+  var g = scanGen;
+  $('ec-again').disabled = true;
+  $('ec-confirm').disabled = true;
+  say('ec-review-msg', '');
+  ec.refusals = {};
+  $('ec-progress').textContent = 'Recording on ' + ecP() + '…';
+  $('ec-result').innerHTML = '';
+  say('ec-result-msg', '');
+  $('ec-undo').style.display = 'none'; $('ec-undo-help').style.display = 'none'; $('ec-home').style.display = 'none';
+  show('s-ec-result');
+  ecApi('ec.confirm', ecBody()).then(function (r) {
+    if (g !== scanGen) return;
+    if (!r || !r.batch_id) return ecFailed('nothing', null);
+    ecPoll(r.batch_id, startedAt, g);
+  }).catch(function () { if (g === scanGen) ecFailed('write', null); });
+}
+$('ec-confirm').onclick = function () { if (!$('ec-confirm').disabled) ecConfirm(Date.now()); };
+function ecPoll(id, startedAt, g) {
+  if (g !== scanGen) return;
+  var again = function () { ecPoll(id, startedAt, g); };
+  ecApi('ec.status', { batch_id: id }).then(function (r) {
+    if (g !== scanGen) return;
+    if (!r || r.state === 'running' || !r.state) return setTimeout(again, 2000);
+    if (r.state === 'failed') {
+      if (r.code === 'busy' && Date.now() - startedAt < EC_RETRY_FOR_MS) {
+        return setTimeout(function () { if (g === scanGen) ecConfirm(startedAt); }, EC_RETRY_MS);
+      }
+      return ecFailed(r.code, r);
+    }
+    ecDone(id, r, g);
+  }).catch(function () { if (g === scanGen) setTimeout(again, 2000); });
+}
+function ecFailed(code, r) {
+  show('s-ec-review');
+  $('ec-confirm').disabled = false;
+  if (code === 'busy') {
+    return say('ec-review-msg', 'Someone else is recording a sign-out for ' + ecP() + ' right now. Try Confirm again in a moment.', 'bad');
+  }
+  if (code === 'refused') {
+    (r.refusals || []).forEach(function (x) {
+      ec.refusals[x.company_product_id] = ecRefusalHtml(x.over ? ecConfirmMarker(x, ecP()) : (x.refusal || ecUnknownRefusal()));
+    });
+    ecPaintReview();
+    return say('ec-review-msg', ecRefusedLead(ecP()), 'bad');
+  }
+  say('ec-review-msg', "I couldn't record this on " + ecP() + "'s sheet. Nothing was recorded, and your list is still here. Try Confirm again, or see the inventory manager.", 'bad');
+}
+function ecDone(id, r, g) {
+  ec.batch = id;
+  ec.undoUntil = Number(r.undo_until) || (Date.now() + 2 * 60 * 60 * 1000);
+  $('ec-progress').textContent = (ec.kind === 'lab' ? 'Signed out to the Lab.' : 'Signed out to the job.')
+    + " I've recorded " + ecPlural((r.lines || []).length, 'line', 'lines') + ', ' + ecPlural(r.units, 'unit', 'units')
+    + ' for ' + ecP() + '.';
+  var ul = $('ec-result');
+  ul.innerHTML = '';
+  (r.lines || []).forEach(function (l) {
+    var li = document.createElement('li');
+    li.textContent = '• ' + l.item + ' — ' + l.units;
+    ul.appendChild(li);
+  });
+  say('ec-result-msg', r.slack_ok === false ? 'Recorded on ' + ecP() + "'s sheet. I couldn't post it to the inventory channel." : '');
+  $('ec-undo').style.display = ''; $('ec-undo-help').style.display = ''; $('ec-home').style.display = '';
+  $('ec-again').disabled = false;
+  setTimeout(function () { if (g === scanGen) { $('ec-undo').style.display = 'none'; $('ec-undo-help').style.display = 'none'; } },
+    Math.max(0, ec.undoUntil - Date.now()));
+}
+$('ec-again').onclick = function () {
+  if ($('ec-again').disabled) return;
+  retireBatch();
+  onLost();
+  state.lines = []; ec.reset();
+  $('ec-undo').style.display = 'none'; $('ec-undo-help').style.display = 'none';
+  $('ec-kind').hidden = true; $('ec-proj').value = ''; say('ec-proj-msg', '');
+  show('s-ec-project');
+};
+$('ec-home').onclick = function () { goHome(); };
+$('ec-undo').onclick = function () {
+  if (!ec.batch || Date.now() > ec.undoUntil) return;
+  $('ec-undo-q').textContent = 'Undo this sign out? The quantities come off ' + ecP() + "'s sheet.";
+  $('ec-undo-ask').hidden = false;
+};
+$('ec-undo-no').onclick = function () { $('ec-undo-ask').hidden = true; };
+$('ec-undo-yes').onclick = function () {
+  $('ec-undo-ask').hidden = true;
+  if (!ec.batch) return;
+  $('ec-undo').disabled = true;
+  $('ec-progress').textContent = 'Undoing on ' + ecP() + '…';
+  var g = scanGen;
+  ecApi('ec.undo', { batch_id: ec.batch }).then(function (r) {
+    if (g !== scanGen) return;
+    $('ec-undo').disabled = false;
+    if (r && r.undo) {
+      $('ec-undo').style.display = 'none'; $('ec-undo-help').style.display = 'none';
+      $('ec-result').innerHTML = '';
+      $('ec-progress').textContent = 'Undone. ' + ecP() + "'s sheet is back to how it was before this sign out.";
+      return say('ec-result-msg', r.slack_ok === false ? "Undone. I couldn't post this to the inventory channel." : '');
+    }
+    var c = (r || {}).code, P = ecP();
+    var text = c === 'window' ? "It's been more than 2 hours, so I can't undo this sign out.\n" + EC_MANAGER
+      : c === 'owner' ? 'Only the person who signed this out can undo it.\n' + EC_MANAGER
+      : c === 'changed' ? r.item + ' has changed on ' + P + "'s sheet since this sign out, so I can't undo it cleanly.\n" + EC_MANAGER
+      : c === 'gone' ? r.item + ' is no longer on ' + P + "'s sheet, so I can't undo this sign out cleanly.\n" + EC_MANAGER
+      : c === 'busy' ? 'Someone else is recording a sign-out for ' + P + ' right now. Try again in a moment.'
+      : c === 'undone' ? 'This sign out is already undone.'
+      : "I couldn't undo this on " + P + "'s sheet. Nothing was changed. Try again, or see the inventory manager.";
+    $('ec-progress').textContent = '';
+    say('ec-result-msg', text, 'bad');
+  }).catch(function () {
+    if (g !== scanGen) return;
+    $('ec-undo').disabled = false;
+    say('ec-result-msg', "I couldn't undo this on " + ecP() + "'s sheet. Nothing was changed. Try again, or see the inventory manager.", 'bad');
+  });
+};
+
+
+band();
+renderTools();
+setKind(rememberedKind(), false);
+window.__ap = { codeFrom: codeFrom, parseLabel: parseLabel, state: state,
+  sight: onSight, lost: onLost, known: function () { return known; }, ec: ec };
+</script>
+</body>
+</html>
